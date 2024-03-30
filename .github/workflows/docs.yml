@@ -27,6 +27,6 @@ jobs:
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN  }}
                   publish_dir: "./docs"
-                  user_name: "JacobLinCool"
-                  user_email: "jacoblincool@users.noreply.github.com"
+                  user_name: "codewithsathya"
+                  user_email: "codewithsathya@users.noreply.github.com"
                   publish_branch: "gh-pages"
