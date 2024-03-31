@@ -99,11 +99,17 @@ export interface MatchedUser {
 }
 
 export interface RecentSubmission {
+    id: string;
+    isPending: string;
+    memory: string;
+    runtime: string;
+    time: string;
+    timestamp: string;
     title: string;
     titleSlug: string;
-    timestamp: string;
     statusDisplay: string;
     lang: string;
+    url: string;
 }
 
 export interface UserProfile {
