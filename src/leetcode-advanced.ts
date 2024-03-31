@@ -9,6 +9,7 @@ import {
     AllCompanyTags,
     CompanyTagDetail,
     EasterEggStatus,
+    SubmissionDetail,
     UserStatus,
     UserStatusWrapper,
 } from "./leetcode-types";
@@ -71,6 +72,29 @@ export class LeetCodeAdvanced extends LeetCode {
             query: USER_STATUS,
         });
         return (data as UserStatusWrapper).userStatus;
+    }
+
+    /**
+     * Get detailed submission of current user.
+     * Need to be authenticated
+     * @returns SubmissionDetail
+     */
+    public async recentSubmission(): Promise<SubmissionDetail> {
+        const userStatus = await this.userStatus();
+        const recentSubmissions = await this.recent_submissions(userStatus.username);
+        const submissionId = parseInt(recentSubmissions[0].id);
+        return await this.submission(submissionId);
+    }
+
+    /**
+     * Get detail submission of a user by username
+     * @param username
+     * @returns SubmissionDetail
+     */
+    public async recentSubmissionOfUser(username: string): Promise<SubmissionDetail> {
+        const recentSubmissions = await this.recent_submissions(username);
+        const submissionId = parseInt(recentSubmissions[0].id);
+        return await this.submission(submissionId);
     }
 }
 
