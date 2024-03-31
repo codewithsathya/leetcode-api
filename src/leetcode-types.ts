@@ -230,60 +230,38 @@ export type SubmissionStatus =
     | "Compile Error"
     | "Runtime Error";
 
-export interface Submission {
-    /**
-     * Submission ID
-     */
+export interface CodeSubmission {
+    code: string;
+    compare_result: string;
+    flag_type: number;
+    has_notes: boolean;
     id: number;
-
-    /**
-     * Submission Language
-     */
+    is_pending: string;
     lang: string;
-
-    /**
-     * Submission Time (Relative)
-     */
+    lang_name: string;
+    memory: string;
+    question_id: number;
+    runtime: string;
+    status: number;
+    status_display: SubmissionStatus;
     time: string;
-
-    /**
-     * Submission Time (Unix Time in Seconds)
-     */
     timestamp: number;
-
-    /**
-     * Submission Status
-     */
-    statusDisplay: SubmissionStatus;
-
-    /**
-     * Submission Runtime, in milliseconds
-     */
-    runtime: number;
-
-    /**
-     * URL path of the submission without domain
-     */
-    url: string;
-
-    /**
-     * true if the submission is still pending
-     */
-    isPending: boolean;
-
-    /**
-     * Title of the problem
-     */
     title: string;
+    title_slug: string;
+    url: string;
+}
 
-    /**
-     * Submission Memory Usage, in MB
-     */
+export interface Submission {
+    id: number;
+    lang: string;
+    time: string;
+    timestamp: number;
+    statusDisplay: SubmissionStatus;
+    runtime: number;
+    url: string;
+    isPending: boolean;
+    title: string;
     memory: number;
-
-    /**
-     * Problem Slug
-     */
     titleSlug: string;
 }
 
