@@ -4,7 +4,6 @@ import Credential from "./credential";
 import CHECKIN from "./graphql/checkin.graphql?raw";
 import COMPANY_TAGS from "./graphql/company-tags.graphql?raw";
 import IS_EASTER_EGG_COLLECTED from "./graphql/is-easter-egg-collected.graphql?raw";
-import USER_STATUS from "./graphql/user-status.graphql?raw";
 import { LeetCode } from "./leetcode";
 import {
     AllCompanyTags,
@@ -12,8 +11,6 @@ import {
     EasterEggStatus,
     SubmissionDetail,
     SubmissionWithCode,
-    UserStatus,
-    UserStatusWrapper,
 } from "./leetcode-types";
 
 export class LeetCodeAdvanced extends LeetCode {
@@ -53,7 +50,7 @@ export class LeetCodeAdvanced extends LeetCode {
      */
     public async checkIn(): Promise<void> {
         await this.initialized;
-        const userStatus = await this.userStatus();
+        const userStatus = await this.whoami();
         if (!userStatus.checkedInToday) {
             await this.graphql({
                 query: CHECKIN,
@@ -64,26 +61,13 @@ export class LeetCodeAdvanced extends LeetCode {
     }
 
     /**
-     * Get user session details.
-     * Need to be authenticated
-     * @returns
-     */
-    public async userStatus(): Promise<UserStatus> {
-        await this.initialized;
-        const { data } = await this.graphql({
-            query: USER_STATUS,
-        });
-        return (data as UserStatusWrapper).userStatus;
-    }
-
-    /**
      * Get detailed submission of current user.
      * Need to be authenticated
      * @returns SubmissionDetail
      */
     public async recentSubmission(): Promise<SubmissionDetail> {
-        const userStatus = await this.userStatus();
-        const recentSubmissions = await this.recent_submissions(userStatus.username);
+        const whoami = await this.whoami();
+        const recentSubmissions = await this.recent_submissions(whoami.username);
         const submissionId = parseInt(recentSubmissions[0].id);
         return await this.submission(submissionId);
     }

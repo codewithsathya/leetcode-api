@@ -125,6 +125,7 @@ export class LeetCode extends EventEmitter {
             variables: { username, limit },
             query: RECENT_SUBMISSIONS,
         });
+        console.log(data);
         return (data.recentSubmissionList as RecentSubmission[]) || [];
     }
 
