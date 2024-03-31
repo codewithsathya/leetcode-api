@@ -18,6 +18,11 @@ export class LeetCodeAdvanced extends LeetCode {
         super(credential, cache);
     }
 
+    /**
+     * Checks if easter egg is already collected.
+     * Need to be authenticated.
+     * @returns boolean
+     */
     public async isEasterEggCollected(): Promise<boolean> {
         await this.initialized;
         const { data } = await this.graphql({
@@ -26,6 +31,11 @@ export class LeetCodeAdvanced extends LeetCode {
         return (data as EasterEggStatus).isEasterEggCollected;
     }
 
+    /**
+     * Get all company tags with their details.
+     * For company wise question details, need to be authenticated and should be premium user.
+     * @returns
+     */
     public async companyTags(): Promise<CompanyTagDetail[]> {
         await this.initialized;
         const { data } = await this.graphql({
@@ -34,6 +44,10 @@ export class LeetCodeAdvanced extends LeetCode {
         return (data as AllCompanyTags).companyTags;
     }
 
+    /**
+     * Checkin to collect a coin
+     * Need to be authenticated
+     */
     public async checkIn(): Promise<void> {
         await this.initialized;
         const userStatus = await this.userStatus();
@@ -46,6 +60,11 @@ export class LeetCodeAdvanced extends LeetCode {
         }
     }
 
+    /**
+     * Get user session details.
+     * Need to be authenticated
+     * @returns
+     */
     public async userStatus(): Promise<UserStatus> {
         await this.initialized;
         const { data } = await this.graphql({
