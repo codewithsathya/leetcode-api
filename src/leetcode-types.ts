@@ -1,5 +1,23 @@
 //////////////////////////////////////////////////////////////////////////////
 // GraphQL
+export interface AllCompanyTags {
+    companyTags: CompanyTagDetail[];
+}
+
+export interface CompanyTagDetail {
+    id: string;
+    imgUrl: string;
+    name: string;
+    slug: string;
+    questionCount: number;
+    questionIds: number[];
+    frequencies: string;
+}
+
+export interface EasterEggStatus {
+    isEasterEggCollected: boolean;
+}
+
 export interface AllQuestionsCount {
     difficulty: string;
     count: number;
@@ -63,11 +81,17 @@ export interface MatchedUser {
 }
 
 export interface RecentSubmission {
+    id: string;
+    isPending: string;
+    memory: string;
+    runtime: string;
+    time: string;
+    timestamp: string;
     title: string;
     titleSlug: string;
-    timestamp: string;
     statusDisplay: string;
     lang: string;
+    url: string;
 }
 
 export interface UserProfile {
@@ -189,59 +213,16 @@ export type SubmissionStatus =
     | "Runtime Error";
 
 export interface Submission {
-    /**
-     * Submission ID
-     */
     id: number;
-
-    /**
-     * Submission Language
-     */
     lang: string;
-
-    /**
-     * Submission Time (Relative)
-     */
     time: string;
-
-    /**
-     * Submission Time (Unix Time in Seconds)
-     */
     timestamp: number;
-
-    /**
-     * Submission Status
-     */
     statusDisplay: SubmissionStatus;
-
-    /**
-     * Submission Runtime, in milliseconds
-     */
     runtime: number;
-
-    /**
-     * URL path of the submission without domain
-     */
     url: string;
-
-    /**
-     * true if the submission is still pending
-     */
     isPending: boolean;
-
-    /**
-     * Title of the problem
-     */
     title: string;
-
-    /**
-     * Submission Memory Usage, in MB
-     */
     memory: number;
-
-    /**
-     * Problem Slug
-     */
     titleSlug: string;
 }
 
@@ -255,6 +236,8 @@ export interface Whoami {
     isAdmin: boolean;
     isSuperuser: boolean;
     isTranslator: boolean;
+    activeSessionId: string;
+    checkedInToday: string;
     permissions: string[];
 }
 
