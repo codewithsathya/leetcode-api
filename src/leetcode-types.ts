@@ -1,5 +1,19 @@
 //////////////////////////////////////////////////////////////////////////////
 // GraphQL
+export interface AllCompanyTags {
+    companyTags: CompanyTagDetail[];
+}
+
+export interface CompanyTagDetail {
+    id: string;
+    imgUrl: string;
+    name: string;
+    slug: string;
+    questionCount: number;
+    questionIds: number[];
+    frequencies: string;
+}
+
 export interface EasterEggStatus {
     isEasterEggCollected: boolean;
 }
