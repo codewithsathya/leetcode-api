@@ -212,27 +212,6 @@ export type SubmissionStatus =
     | "Compile Error"
     | "Runtime Error";
 
-export interface SubmissionWithCode {
-    code: string;
-    compare_result: string;
-    flag_type: number;
-    has_notes: boolean;
-    id: number;
-    is_pending: string;
-    lang: string;
-    lang_name: string;
-    memory: string;
-    question_id: number;
-    runtime: string;
-    status: number;
-    status_display: SubmissionStatus;
-    time: string;
-    timestamp: number;
-    title: string;
-    title_slug: string;
-    url: string;
-}
-
 export interface Submission {
     id: number;
     lang: string;

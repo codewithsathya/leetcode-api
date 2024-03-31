@@ -1,5 +1,4 @@
 import { cache as default_cache } from "./cache";
-import { BASE_URL, USER_AGENT } from "./constants";
 import Credential from "./credential";
 import CHECKIN from "./graphql/checkin.graphql?raw";
 import COMPANY_TAGS from "./graphql/company-tags.graphql?raw";
@@ -10,7 +9,6 @@ import {
     CompanyTagDetail,
     EasterEggStatus,
     SubmissionDetail,
-    SubmissionWithCode,
 } from "./leetcode-types";
 
 export class LeetCodeAdvanced extends LeetCode {
@@ -74,60 +72,14 @@ export class LeetCodeAdvanced extends LeetCode {
 
     /**
      * Get detail submission of a user by username
+     * Need to be authenticated
      * @param username
      * @returns SubmissionDetail
      */
-    public async recentSubmissionOfUser(username: string): Promise<SubmissionDetail> {
+    public async recentDetailedSubmissionOfUser(username: string): Promise<SubmissionDetail> {
         const recentSubmissions = await this.recent_submissions(username);
         const submissionId = parseInt(recentSubmissions[0].id);
         return await this.submission(submissionId);
-    }
-
-    /**
-     * Get all submissions including code of a credential user.
-     * Need to be authenticated
-     * @returns SubmissionWithCode[]
-     */
-    public async submissionsWithCode(): Promise<SubmissionWithCode[]> {
-        await this.initialized;
-        let submissions: SubmissionWithCode[] = [];
-        let offset = 0;
-        let hasNext = true;
-        while (hasNext) {
-            try {
-                await this.limiter.lock();
-                const res = await fetch(`${BASE_URL}/api/submissions?offset=${offset}`, {
-                    method: "get",
-                    headers: {
-                        origin: BASE_URL,
-                        referer: BASE_URL,
-                        cookie: `csrftoken=${this.credential.csrf || ""}; LEETCODE_SESSION=${
-                            this.credential.session || ""
-                        };`,
-                        "user-agent": USER_AGENT,
-                    },
-                });
-                const data = (await res.json()) as {
-                    submissions_dump: SubmissionWithCode[];
-                    has_next: boolean;
-                };
-                let currentSubmissions: SubmissionWithCode[] = data.submissions_dump;
-                currentSubmissions = currentSubmissions.filter(
-                    (submission) => submission.status_display === "Accepted",
-                );
-                currentSubmissions.forEach((submission) => {
-                    submission.timestamp *= 1000;
-                });
-                submissions = [...submissions, ...currentSubmissions];
-                hasNext = data.has_next;
-                offset += 20;
-                this.limiter.unlock;
-            } catch (err) {
-                this.limiter.unlock();
-                throw err;
-            }
-        }
-        return submissions;
     }
 }
 
