@@ -8,10 +8,10 @@ import USER_STATUS from "./graphql/user-status.graphql?raw";
 import { LeetCode } from "./leetcode";
 import {
     AllCompanyTags,
-    CodeSubmission,
     CompanyTagDetail,
     EasterEggStatus,
     SubmissionDetail,
+    SubmissionWithCode,
     UserStatus,
     UserStatusWrapper,
 } from "./leetcode-types";
@@ -102,11 +102,11 @@ export class LeetCodeAdvanced extends LeetCode {
     /**
      * Get all submissions including code of a credential user.
      * Need to be authenticated
-     * @returns CodeSubmission[]
+     * @returns SubmissionWithCode[]
      */
-    public async submissionsWithCode(): Promise<CodeSubmission[]> {
+    public async submissionsWithCode(): Promise<SubmissionWithCode[]> {
         await this.initialized;
-        let submissions: CodeSubmission[] = [];
+        let submissions: SubmissionWithCode[] = [];
         let offset = 0;
         let hasNext = true;
         while (hasNext) {
@@ -124,10 +124,10 @@ export class LeetCodeAdvanced extends LeetCode {
                     },
                 });
                 const data = (await res.json()) as {
-                    submissions_dump: CodeSubmission[];
+                    submissions_dump: SubmissionWithCode[];
                     has_next: boolean;
                 };
-                let currentSubmissions: CodeSubmission[] = data.submissions_dump;
+                let currentSubmissions: SubmissionWithCode[] = data.submissions_dump;
                 currentSubmissions = currentSubmissions.filter(
                     (submission) => submission.status_display === "Accepted",
                 );
