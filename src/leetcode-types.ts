@@ -230,7 +230,7 @@ export type SubmissionStatus =
     | "Compile Error"
     | "Runtime Error";
 
-export interface CodeSubmission {
+export interface SubmissionWithCode {
     code: string;
     compare_result: string;
     flag_type: number;
