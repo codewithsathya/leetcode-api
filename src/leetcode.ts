@@ -40,7 +40,7 @@ export class LeetCode extends EventEmitter {
     /**
      * Used to ensure the LeetCode instance is initialized.
      */
-    private initialized: Promise<boolean>;
+    protected initialized: Promise<boolean>;
 
     /**
      * Rate limiter

@@ -1,16 +1,15 @@
 query globalData {
     userStatus {
         userId
-        username
-        avatar
         isSignedIn
         isMockUser
         isPremium
+        isVerified
+        username
+        avatar
         isAdmin
         isSuperuser
-        isTranslator
         activeSessionId
         checkedInToday
-        permissions
     }
 }
