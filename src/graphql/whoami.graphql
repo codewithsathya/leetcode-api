@@ -1,4 +1,4 @@
-query {
+query globalData {
     userStatus {
         userId
         username
@@ -9,6 +9,8 @@ query {
         isAdmin
         isSuperuser
         isTranslator
+        activeSessionId
+        checkedInToday
         permissions
     }
 }

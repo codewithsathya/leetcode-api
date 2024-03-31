@@ -1,23 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
 // GraphQL
-export interface UserStatusWrapper {
-    userStatus: UserStatus;
-}
-
-export interface UserStatus {
-    userId: number;
-    isSignedIn: boolean;
-    isMockUser: boolean;
-    isPremium: boolean;
-    isVerified: boolean;
-    username: string;
-    avatar: string;
-    isAdmin: boolean;
-    isSuperuser: boolean;
-    activeSessionId: number;
-    checkedInToday: boolean;
-}
-
 export interface AllCompanyTags {
     companyTags: CompanyTagDetail[];
 }
@@ -275,6 +257,8 @@ export interface Whoami {
     isAdmin: boolean;
     isSuperuser: boolean;
     isTranslator: boolean;
+    activeSessionId: string;
+    checkedInToday: string;
     permissions: string[];
 }
 
