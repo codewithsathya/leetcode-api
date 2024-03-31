@@ -33,7 +33,6 @@ describe("LeetCode", { timeout: 15_000 }, () => {
 
         it("should be able to get user's recent submissions", async () => {
             const recent_submissions = await lc.recent_submissions("jacoblincool", 10);
-            console.log(recent_submissions);
             expect(recent_submissions.length).toBe(10);
         });
 
