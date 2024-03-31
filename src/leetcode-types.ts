@@ -1,5 +1,9 @@
 //////////////////////////////////////////////////////////////////////////////
 // GraphQL
+export interface EasterEggStatus {
+    isEasterEggCollected: boolean;
+}
+
 export interface AllQuestionsCount {
     difficulty: string;
     count: number;
