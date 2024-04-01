@@ -1,5 +1,106 @@
 //////////////////////////////////////////////////////////////////////////////
 // GraphQL
+export interface DetailedProblem {
+    questionId?: string;
+    questionFrontendId?: string;
+    boundTopicId?: unknown;
+    title?: string;
+    titleSlug?: string;
+    translatedTitle?: string | null;
+    content?: string;
+    translatedContent?: string | null;
+    isPaidOnly?: boolean;
+    difficulty?: ProblemDifficulty;
+    likes?: number;
+    dislikes?: number;
+    isLiked?: boolean | null;
+    similarQuestions?: SimilarQuestion[] | string;
+    sampleTestCase?: string;
+    exampleTestcases?: string;
+    contributors?: unknown[];
+    topicTags?: TopicTag[];
+    companyTagStats?: OfficialCompanyTagStats | CompanyTagStat[] | null;
+    frequency?: number;
+    codeSnippets?: CodeSnippet[];
+    stats?: Stats | string;
+    hints?: string[];
+    solution?: OfficialSolution;
+    status?: unknown;
+    metaData?: unknown;
+    judgerAvailable?: boolean;
+    judgeType?: string;
+    mysqlSchemas?: unknown[];
+    enableRunCode?: boolean;
+    enableTestMode?: boolean;
+    enableDebugger?: boolean;
+    envInfo?: string;
+    libraryUrl?: string | null;
+    adminUrl?: string | null;
+    challengeQuestion?: ChallengeQuestion;
+    note?: string | null;
+    type?: string[];
+}
+
+export interface SimilarQuestion {
+    title: string;
+    titleSlug: string;
+    difficulty: ProblemDifficulty;
+    translatedTitle: string | null;
+}
+
+export interface CompanyTagStat {
+    company: string;
+    frequency: number;
+}
+
+export interface OfficialCompanyTagStats {
+    [type: string]: {
+        taggedByAdmin: boolean;
+        name: string;
+        slug: string;
+        timesEncountered: number;
+    }[];
+}
+
+export interface Stats {
+    totalAccepted: string;
+    totalSubmission: string;
+    totalAcceptedRaw: number;
+    totalSubmissionRaw: number;
+    acRate: string;
+}
+
+export interface CodeSnippet {
+    lang: string;
+    langSlug: string;
+    code: string;
+}
+
+export interface OfficialSolution {
+    id: string;
+    canSeeDetail: boolean;
+    paidOnly: boolean;
+    hasVideoSolution: boolean;
+    paidOnlyVideo: boolean;
+}
+
+export interface ChallengeQuestion {
+    id: string;
+    date: string;
+    incompleteChallengeCount: number;
+    streakCount: number;
+    type: string;
+}
+
+export interface ProblemFieldDetails {
+    title: string;
+    field: string;
+    enable: boolean;
+    private: boolean;
+    needParsing: boolean;
+    needRequestChunking: boolean;
+}
+
 export interface AllCompanyTags {
     companyTags: CompanyTagDetail[];
 }

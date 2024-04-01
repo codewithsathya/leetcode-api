@@ -6202,9 +6202,9 @@ type QuestionInfoNode {
 type QuestionNode {
     allowDiscuss: Boolean
     article: JSONString
-    articleTopicId: String
-    book: CategoryInfoNode
-    boundTopicId: Int
+    # articleTopicId: String
+    # book: CategoryInfoNode
+    # boundTopicId: Int
     categoryTitle: String
     codeDefinition: JSONString
     codeSnippets: [CodeSnippetNode]
@@ -6216,14 +6216,14 @@ type QuestionNode {
     enableRunCode: Boolean
     enableSubmit: Boolean
     enableTestMode: Boolean
-    envInfo: String @deprecated(reason: "use LibraryLanguageNode.environment_info")
+    # envInfo: String @deprecated(reason: "use LibraryLanguageNode.environment_info")
     frequencyTimePeriod: Int
     hints: [String]
     infoVerified: Boolean
     interpretUrl: String
     isLiked: Boolean
     isPaidOnly: Boolean
-    isSubscribed: Boolean!
+    # isSubscribed: Boolean!
     judgeType: String
     judgerAvailable: Boolean
     langToValidPlayground: JSONString
@@ -6239,7 +6239,7 @@ type QuestionNode {
     questionTitle: String
     questionTitleSlug: String
     questionType: String
-    randomQuestionUrl: String
+    # randomQuestionUrl: String
     sampleTestCase: String
     sessionId: String
     similarQuestions: JSONString
@@ -6252,7 +6252,7 @@ type QuestionNode {
     topicTags: [TopicTagNode!]
     translatedContent: String
     translatedTitle: String
-    ugcQuestionId: String
+    # ugcQuestionId: String
     urlManager: JSONString
 }
 
