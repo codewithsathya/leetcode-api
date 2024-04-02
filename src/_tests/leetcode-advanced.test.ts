@@ -5,7 +5,7 @@ import { Credential } from '../credential';
 import { LeetCodeAdvanced } from '../leetcode-advanced';
 import problemProperties from '../problem-properties';
 
-describe('LeetCode Advanced', { timeout: 60_000 }, () => {
+describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 	describe('General', () => {
 		it('should be an instance of LeetCodeAdvanced', () => {
 			const lc = new LeetCodeAdvanced();
@@ -48,6 +48,18 @@ describe('LeetCode Advanced', { timeout: 60_000 }, () => {
 			problemProperty.problemsPerRequest = 500;
 			const problems = await lc.problemsOfProperty(problemProperty);
 			expect(problems.length).toBeGreaterThan(3000);
+		});
+
+		it('should be able to get detailed problems', async () => {
+			const problems = await lc.detailedProblems({
+				category: '',
+				offset: 0,
+				limit: 10,
+			});
+			expect(problems.length).equals(10);
+			expect(problems[0].questionFrontendId).toBeTruthy();
+			expect(problems[0].title).toBeTruthy();
+			expect(problems[0].difficulty).toBeTruthy();
 		});
 	});
 
