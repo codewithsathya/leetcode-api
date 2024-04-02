@@ -82,10 +82,35 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 		);
 
 		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
+			'should be return false when collectEasterEgg which is already collected',
+			async () => {
+				const collected = await lc.collectEasterEgg();
+				expect(collected).toBe(false);
+			},
+		);
+
+		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
 			'should be able to get recent submission',
 			async () => {
 				const recentSubmission = await lc.recentSubmission();
 				expect(recentSubmission).toBeTruthy();
+				expect(recentSubmission.id.length).toBeGreaterThan(0);
+			},
+		);
+
+		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
+			'should be able to get detailed submission of a user',
+			async () => {
+				const recentSubmission = await lc.recentSubmissionOfUser('jacoblincool');
+				expect(recentSubmission).toBeTruthy();
+				expect(recentSubmission.id.length).toBeGreaterThan(0);
+			},
+		);
+
+		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
+			'should be able to get recent detailed submission',
+			async () => {
+				const recentSubmission = await lc.recentSubmissionDetail();
 				expect(recentSubmission.code.length).toBeGreaterThan(0);
 				expect(recentSubmission.id).toBeGreaterThan(0);
 			},
@@ -94,8 +119,7 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
 			'should be able to get recent detailed submission of a user',
 			async () => {
-				const recentSubmission = await lc.recentDetailedSubmissionOfUser('jacoblincool');
-				expect(recentSubmission).toBeTruthy();
+				const recentSubmission = await lc.recentSubmissionDetailOfUser('jacoblincool');
 				expect(recentSubmission.code.length).toBeGreaterThan(0);
 				expect(recentSubmission.id).toBeGreaterThan(0);
 			},
