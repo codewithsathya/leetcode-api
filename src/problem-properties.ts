@@ -393,8 +393,8 @@ const problemProperties: ProblemFieldDetails[] = [
 	},
 	{
 		title: 'Sample testcase',
-		property: 'SampleTestCase',
-		graphql: 'SampleTestCase',
+		property: 'sampleTestCase',
+		graphql: 'sampleTestCase',
 		enable: false,
 		private: false,
 		isPremium: false,
