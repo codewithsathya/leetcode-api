@@ -1,44 +1,69 @@
 //////////////////////////////////////////////////////////////////////////////
 // GraphQL
-export interface DetailedProblem {
-	questionId?: string;
+export interface DetailedProblem2 {
+	allowDiscuss?: boolean;
+	article?: Article;
+	categoryTitle?: string;
+	codeDefinition?: CodeDefinition[];
+	codeSnippets?: CodeSnippet[];
+	companyTagStats?: OfficialCompanyTagStats | null;
+	content?: string;
+	difficulty?: ProblemDifficulty;
+	dislikes?: number;
+	enableRunCode?: boolean;
+	enableSubmit?: boolean;
+	enableTestMode?: boolean;
+	frequency?: number;
+	hints?: string[];
+	infoVerified?: boolean;
+	interpretUrl?: string;
+	isLiked?: true | null;
+	isPaidOnly?: boolean;
+	judgeType?: string;
+	judgerAvailable?: boolean;
+	langToValidPlayground?: Record<string, boolean>;
+	libraryUrl?: string | null;
+	likes?: number;
+	metadata?: string;
+	mysqlSchemas?: string[];
+	nextChallengePairs?: NextChallengePair[] | null;
+	note?: string | null;
+	questionDetailUrl?: string;
 	questionFrontendId?: string;
-	boundTopicId?: unknown;
+	questionId?: string;
+	questionTitle?: string;
+	questionTitleSlug?: string;
+	questionType?: string;
+	sampleTestCase?: string;
+	sessionId?: string;
+	similarQuestions?: SimilarQuestion[];
+	solution?: OfficialSolution;
+	stats?: Stats;
+	status?: string | null;
+	submitUrl?: string;
 	title?: string;
 	titleSlug?: string;
-	translatedTitle?: string | null;
-	content?: string;
-	translatedContent?: string | null;
-	isPaidOnly?: boolean;
-	difficulty?: ProblemDifficulty;
-	likes?: number;
-	dislikes?: number;
-	isLiked?: boolean | null;
-	similarQuestions?: SimilarQuestion[] | string;
-	sampleTestCase?: string;
-	exampleTestcases?: string;
-	contributors?: unknown[];
 	topicTags?: TopicTag[];
-	companyTagStats?: OfficialCompanyTagStats | CompanyTagStat[] | null;
-	frequency?: number;
-	codeSnippets?: CodeSnippet[];
-	stats?: Stats | string;
-	hints?: string[];
-	solution?: OfficialSolution;
-	status?: unknown;
-	metaData?: unknown;
-	judgerAvailable?: boolean;
-	judgeType?: string;
-	mysqlSchemas?: unknown[];
-	enableRunCode?: boolean;
-	enableTestMode?: boolean;
-	enableDebugger?: boolean;
-	envInfo?: string;
-	libraryUrl?: string | null;
-	adminUrl?: string | null;
-	challengeQuestion?: ChallengeQuestion;
-	note?: string | null;
-	type?: string[];
+	translatedContent?: string | null;
+	translatedTitle?: string | null;
+}
+
+export interface NextChallengePair {
+	question_title: string;
+	question_title_slug: string;
+	difficulty: 'E' | 'M' | 'H';
+}
+
+export interface CodeDefinition {
+	value: string;
+	text: string;
+	defaultCode: string;
+}
+
+export interface Article {
+	id: number;
+	url: string;
+	topicId: number;
 }
 
 export interface SimilarQuestion {
@@ -77,8 +102,21 @@ export interface CodeSnippet {
 }
 
 export interface OfficialSolution {
-	id: string;
 	canSeeDetail: boolean;
+	content: string | null;
+	contentTypeId: string;
+	id: string;
+	rating: {
+		average: string;
+		count: number;
+		id: string;
+		userRating: {
+			id: string;
+			score: number;
+		} | null;
+	};
+	title: string;
+	url: string;
 	paidOnly: boolean;
 	hasVideoSolution: boolean;
 	paidOnlyVideo: boolean;
@@ -94,11 +132,62 @@ export interface ChallengeQuestion {
 
 export interface ProblemFieldDetails {
 	title: string;
-	field: string;
+	property:
+		| 'allowDiscuss'
+		| 'article'
+		| 'categoryTitle'
+		| 'codeDefinition'
+		| 'codeSnippets'
+		| 'companyTagStats'
+		| 'content'
+		| 'difficulty'
+		| 'dislikes'
+		| 'enableRunCode'
+		| 'enableSubmit'
+		| 'enableTestMode'
+		| 'frequency'
+		| 'hints'
+		| 'infoVerified'
+		| 'infoVerified'
+		| 'interpretUrl'
+		| 'isLiked'
+		| 'isPaidOnly'
+		| 'judgeType'
+		| 'judgerAvailable'
+		| 'langToValidPlayground'
+		| 'libraryUrl'
+		| 'likes'
+		| 'metaData'
+		| 'mysqlSchemas'
+		| 'nextChallengePairs'
+		| 'note'
+		| 'questionDetailUrl'
+		| 'questionFrontendId'
+		| 'questionId'
+		| 'questionTitle'
+		| 'questionTitleSlug'
+		| 'questionType'
+		| 'questionType'
+		| 'SampleTestCase'
+		| 'sessionId'
+		| 'similarQuestions'
+		| 'solution'
+		| 'stats'
+		| 'status'
+		| 'submitUrl'
+		| 'title'
+		| 'titleSlug'
+		| 'titleSlug'
+		| 'topicTags'
+		| 'translatedContent'
+		| 'translatedTitle';
+	graphql: string;
 	enable: boolean;
 	private: boolean;
+	isPremium: boolean;
 	needParsing: boolean;
 	needRequestChunking: boolean;
+	problemsPerRequest: number;
 }
 
 export interface AllCompanyTags {
