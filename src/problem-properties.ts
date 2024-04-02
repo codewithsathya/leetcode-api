@@ -30,7 +30,7 @@ const problemProperties: ProblemFieldDetails[] = [
 		enable: true,
 		private: false,
 		isPremium: false,
-		needParsing: true,
+		needParsing: false,
 		needRequestChunking: false,
 		problemsPerRequest: 100000,
 	},

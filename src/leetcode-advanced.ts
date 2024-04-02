@@ -18,9 +18,14 @@ import problemProperties from './problem-properties';
 
 export class LeetCodeAdvanced extends LeetCode {
 	problemProperties = problemProperties;
+	uniquePropertyOfProblem = 'questionFrontendId';
 
 	constructor(credential: Credential | null = null, cache = default_cache) {
 		super(credential, cache);
+	}
+
+	public setUniquePropertyOfProblem(property: string): void {
+		this.uniquePropertyOfProblem = property;
 	}
 
 	public setCustomProblemProperties(problemProperties: ProblemFieldDetails[]): void {
@@ -93,6 +98,10 @@ export class LeetCodeAdvanced extends LeetCode {
 		return await this.submission(submissionId);
 	}
 
+	/**
+	 * Get no of total problems in leetcode right now.
+	 * @returns number
+	 */
 	public async noOfProblems(): Promise<number> {
 		await this.initialized;
 		const { data } = await this.graphql({
@@ -105,6 +114,46 @@ export class LeetCodeAdvanced extends LeetCode {
 		return data.problemsetQuestionList.total as number;
 	}
 
+	/**
+	 * Get list of detailed problems by tags and difficulty.
+	 * This will collect details according to the problemProperties configuration and this is slow.
+	 * @param option
+	 * @param option.category
+	 * @param option.offset
+	 * @param option.limit
+	 * @param option.filters
+	 * @returns DetailedProblem[]
+	 */
+	public async detailedProblems({
+		category = '',
+		offset = 0,
+		limit = 100000,
+		filters = {},
+	}: QueryParams = {}): Promise<DetailedProblem[]> {
+		await this.initialized;
+		let problems: DetailedProblem[] = [];
+		for (const problemProperty of this.problemProperties.filter(({ enable }) => enable)) {
+			const consolidatedProblems = await this.problemsOfProperty(problemProperty, {
+				category,
+				offset,
+				limit,
+				filters,
+			});
+			if (problems.length === 0) {
+				problems = consolidatedProblems;
+			} else {
+				problems = this.combineProperties(problems, consolidatedProblems);
+			}
+		}
+		return problems;
+	}
+
+	/**
+	 * Get problems with a particular property and requests are sent according to the configuration.
+	 * @param problemProperty
+	 * @param QueryParams
+	 * @returns DetailedProblem[]
+	 */
 	public async problemsOfProperty(
 		problemProperty: ProblemFieldDetails,
 		{ category = '', offset = 0, limit = 100000, filters = {} }: QueryParams = {},
@@ -112,6 +161,8 @@ export class LeetCodeAdvanced extends LeetCode {
 		if (!problemProperty.enable) {
 			throw new Error(`${problemProperty.title} is not enabled.`);
 		}
+
+		await this.initialized;
 
 		const variables = { categorySlug: category, skip: offset, limit, filters };
 		let problems: DetailedProblem[] = [];
@@ -145,8 +196,24 @@ export class LeetCodeAdvanced extends LeetCode {
 		return problems;
 	}
 
+	private combineProperties(arr1: DetailedProblem[], arr2: DetailedProblem[]) {
+		const uniquePropertyOfProblem = this.uniquePropertyOfProblem as keyof DetailedProblem;
+		const arr1Map = arr1.reduce(
+			(map, item) => {
+				const uniqueValue = item[uniquePropertyOfProblem] as string;
+				map[uniqueValue] = item;
+				return map;
+			},
+			{} as Record<string, DetailedProblem>,
+		);
+		return arr2.map((item) => ({
+			...item,
+			...arr1Map[item[uniquePropertyOfProblem] as string],
+		}));
+	}
+
 	private getProblemsQuery({
-		uniqueProperty = 'questionFrontendId',
+		uniqueProperty = this.uniquePropertyOfProblem,
 		requiredProperty = '',
 	}): string {
 		return `query problemsetQuestionList(
