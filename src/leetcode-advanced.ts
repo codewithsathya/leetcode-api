@@ -1,6 +1,7 @@
 import { cache as default_cache } from './cache';
 import Credential from './credential';
 import CHECKIN from './graphql/checkin.graphql?raw';
+import COLLECT_EASTER_EGG from './graphql/collect-easter-egg.graphql?raw';
 import COMPANY_TAGS from './graphql/company-tags.graphql?raw';
 import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
@@ -12,6 +13,7 @@ import {
 	EasterEggStatus,
 	ProblemFieldDetails,
 	QueryParams,
+	RecentSubmission,
 	SubmissionDetail,
 } from './leetcode-types';
 import problemProperties from './problem-properties';
@@ -46,6 +48,24 @@ export class LeetCodeAdvanced extends LeetCode {
 	}
 
 	/**
+	 * Collects easter egg if available.
+	 * Need to be authenticated.
+	 */
+	public async collectEasterEgg(): Promise<boolean> {
+		await this.initialized;
+		const easterEggCollected = await this.isEasterEggCollected();
+		if (easterEggCollected) {
+			return false;
+		}
+		await this.graphql({
+			operationName: 'collectContestEasterEgg',
+			variables: {},
+			query: COLLECT_EASTER_EGG,
+		});
+		return true;
+	}
+
+	/**
 	 * Get all company tags with their details.
 	 * For company wise question details, need to be authenticated and should be premium user.
 	 * @returns
@@ -75,15 +95,37 @@ export class LeetCodeAdvanced extends LeetCode {
 	}
 
 	/**
+	 * Get recent submission of current user.
+	 * Need to be authenticated
+	 * @returns RecentSubmission
+	 */
+	public async recentSubmission(): Promise<RecentSubmission> {
+		const whoami = await this.whoami();
+		const recentSubmissions = await this.recent_submissions(whoami.username, 1);
+		return recentSubmissions[0];
+	}
+
+	/**
 	 * Get detailed submission of current user.
 	 * Need to be authenticated
 	 * @returns SubmissionDetail
 	 */
-	public async recentSubmission(): Promise<SubmissionDetail> {
+	public async recentSubmissionDetail(): Promise<SubmissionDetail> {
 		const whoami = await this.whoami();
 		const recentSubmissions = await this.recent_submissions(whoami.username);
 		const submissionId = parseInt(recentSubmissions[0].id);
 		return await this.submission(submissionId);
+	}
+
+	/**
+	 * Get recent submission of a user by username
+	 * Need to be authenticated
+	 * @param username
+	 * @returns RecentSubmission
+	 */
+	public async recentSubmissionOfUser(username: string): Promise<RecentSubmission> {
+		const recent_submissions = await this.recent_submissions(username);
+		return recent_submissions[0];
 	}
 
 	/**
@@ -92,7 +134,7 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * @param username
 	 * @returns SubmissionDetail
 	 */
-	public async recentDetailedSubmissionOfUser(username: string): Promise<SubmissionDetail> {
+	public async recentSubmissionDetailOfUser(username: string): Promise<SubmissionDetail> {
 		const recentSubmissions = await this.recent_submissions(username);
 		const submissionId = parseInt(recentSubmissions[0].id);
 		return await this.submission(submissionId);
