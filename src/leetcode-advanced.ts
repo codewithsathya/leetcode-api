@@ -13,6 +13,7 @@ import {
 	EasterEggStatus,
 	ProblemFieldDetails,
 	QueryParams,
+	RecentSubmission,
 	SubmissionDetail,
 } from './leetcode-types';
 import problemProperties from './problem-properties';
@@ -93,15 +94,37 @@ export class LeetCodeAdvanced extends LeetCode {
 	}
 
 	/**
+	 * Get recent submission of current user.
+	 * Need to be authenticated
+	 * @returns RecentSubmission
+	 */
+	public async recentSubmission(): Promise<RecentSubmission> {
+		const whoami = await this.whoami();
+		const recentSubmissions = await this.recent_submissions(whoami.username, 1);
+		return recentSubmissions[0];
+	}
+
+	/**
 	 * Get detailed submission of current user.
 	 * Need to be authenticated
 	 * @returns SubmissionDetail
 	 */
-	public async recentSubmission(): Promise<SubmissionDetail> {
+	public async recentSubmissionDetail(): Promise<SubmissionDetail> {
 		const whoami = await this.whoami();
 		const recentSubmissions = await this.recent_submissions(whoami.username);
 		const submissionId = parseInt(recentSubmissions[0].id);
 		return await this.submission(submissionId);
+	}
+
+	/**
+	 * Get recent submission of a user by username
+	 * Need to be authenticated
+	 * @param username
+	 * @returns RecentSubmission
+	 */
+	public async recentSubmissionOfUser(username: string): Promise<RecentSubmission> {
+		const recent_submissions = await this.recent_submissions(username);
+		return recent_submissions[0];
 	}
 
 	/**
@@ -110,7 +133,7 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * @param username
 	 * @returns SubmissionDetail
 	 */
-	public async recentDetailedSubmissionOfUser(username: string): Promise<SubmissionDetail> {
+	public async recentSubmissionDetailOfUser(username: string): Promise<SubmissionDetail> {
 		const recentSubmissions = await this.recent_submissions(username);
 		const submissionId = parseInt(recentSubmissions[0].id);
 		return await this.submission(submissionId);
