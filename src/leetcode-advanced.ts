@@ -1,6 +1,7 @@
 import { cache as default_cache } from './cache';
 import Credential from './credential';
 import CHECKIN from './graphql/checkin.graphql?raw';
+import COLLECT_EASTER_EGG from './graphql/collect-easter-egg.graphql?raw';
 import COMPANY_TAGS from './graphql/company-tags.graphql?raw';
 import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
@@ -43,6 +44,23 @@ export class LeetCodeAdvanced extends LeetCode {
 			query: IS_EASTER_EGG_COLLECTED,
 		});
 		return (data as EasterEggStatus).isEasterEggCollected;
+	}
+
+	/**
+	 * Collects easter egg if available.
+	 * Need to be authenticated.
+	 */
+	public async collectEasterEgg(): Promise<void> {
+		await this.initialized;
+		const easterEggCollected = await this.isEasterEggCollected();
+		if (easterEggCollected) {
+			throw new Error('Easter egg is already collected.');
+		}
+		await this.graphql({
+			operationName: 'collectContestEasterEgg',
+			variables: {},
+			query: COLLECT_EASTER_EGG,
+		});
 	}
 
 	/**
