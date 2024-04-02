@@ -1,11 +1,11 @@
 query questionCompanyTags {
-    companyTags {
-        id
-        imgUrl
-        name
-        slug
-        questionCount
-        questionIds
-        frequencies
-    }
+	companyTags {
+		id
+		imgUrl
+		name
+		slug
+		questionCount
+		questionIds
+		frequencies
+	}
 }
