@@ -1,0 +1,5 @@
+query problemsetQuestionList($categorySlug: String, $filters: QuestionListFilterInput) {
+	problemsetQuestionList: questionList(categorySlug: $categorySlug, filters: $filters) {
+		total: totalNum
+	}
+}
