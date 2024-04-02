@@ -51,17 +51,18 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * Collects easter egg if available.
 	 * Need to be authenticated.
 	 */
-	public async collectEasterEgg(): Promise<void> {
+	public async collectEasterEgg(): Promise<boolean> {
 		await this.initialized;
 		const easterEggCollected = await this.isEasterEggCollected();
 		if (easterEggCollected) {
-			throw new Error('Easter egg is already collected.');
+			return false;
 		}
 		await this.graphql({
 			operationName: 'collectContestEasterEgg',
 			variables: {},
 			query: COLLECT_EASTER_EGG,
 		});
+		return true;
 	}
 
 	/**
