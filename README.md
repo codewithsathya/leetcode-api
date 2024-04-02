@@ -31,19 +31,19 @@ The API to get user profiles, submissions, and problems on LeetCode, with highly
 Includes recent submissions and posts.
 
 ```typescript
-import { LeetCode } from "leetcode-query";
+import { LeetCode } from 'leetcode-query';
 
 const leetcode = new LeetCode();
-const user = await leetcode.user("username");
+const user = await leetcode.user('username');
 ```
 
 ### Get All Of Your Submissions
 
 ```typescript
-import { LeetCode, Credential } from "leetcode-query";
+import { LeetCode, Credential } from 'leetcode-query';
 
 const credential = new Credential();
-await credential.init("YOUR-LEETCODE-SESSION-COOKIE");
+await credential.init('YOUR-LEETCODE-SESSION-COOKIE');
 
 const leetcode = new LeetCode(credential);
 console.log(await leetcode.submissions(100, 0));
@@ -54,34 +54,34 @@ console.log(await leetcode.submissions(100, 0));
 You can use your own fetcher, for example, fetch through a real browser.
 
 ```typescript
-import { LeetCode, fetcher } from "leetcode-query";
-import { chromium } from "playwright-extra";
-import stealth from "puppeteer-extra-plugin-stealth";
+import { LeetCode, fetcher } from 'leetcode-query';
+import { chromium } from 'playwright-extra';
+import stealth from 'puppeteer-extra-plugin-stealth';
 
 // setup browser
 const _browser = chromium.use(stealth()).launch();
 const _page = _browser
-    .then((browser) => browser.newPage())
-    .then(async (page) => {
-        await page.goto("https://leetcode.com");
-        return page;
-    });
+	.then((browser) => browser.newPage())
+	.then(async (page) => {
+		await page.goto('https://leetcode.com');
+		return page;
+	});
 
 // use a custom fetcher
 fetcher.set(async (...args) => {
-    const page = await _page;
+	const page = await _page;
 
-    const res = await page.evaluate(async (args) => {
-        const res = await fetch(...args);
-        return {
-            body: await res.text(),
-            status: res.status,
-            statusText: res.statusText,
-            headers: Object.fromEntries(res.headers),
-        };
-    }, args);
+	const res = await page.evaluate(async (args) => {
+		const res = await fetch(...args);
+		return {
+			body: await res.text(),
+			status: res.status,
+			statusText: res.statusText,
+			headers: Object.fromEntries(res.headers),
+		};
+	}, args);
 
-    return new Response(res.body, res);
+	return new Response(res.body, res);
 });
 
 // use as normal
