@@ -3,8 +3,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { Cache } from '../cache';
 import { Credential } from '../credential';
 import { LeetCodeAdvanced } from '../leetcode-advanced';
+import problemProperties from '../problem-properties';
 
-describe('LeetCode Advanced', { timeout: 15_000 }, () => {
+describe('LeetCode Advanced', { timeout: 60_000 }, () => {
 	describe('General', () => {
 		it('should be an instance of LeetCodeAdvanced', () => {
 			const lc = new LeetCodeAdvanced();
@@ -29,6 +30,24 @@ describe('LeetCode Advanced', { timeout: 15_000 }, () => {
 		it('should be able to get company tags', async () => {
 			const companyTags = await lc.companyTags();
 			expect(companyTags.length).toBeGreaterThan(0);
+		});
+
+		it('should be able to get problems with property', async () => {
+			const problemProperty = problemProperties.filter(
+				({ property }) => property === 'titleSlug',
+			)[0];
+			const problems = await lc.problemsOfProperty(problemProperty);
+			expect(problems.length).toBeGreaterThan(3000);
+		});
+
+		it('should be able to get problems with requests chunked', async () => {
+			const problemProperty = problemProperties.filter(
+				({ property }) => property === 'titleSlug',
+			)[0];
+			problemProperty.needRequestChunking = true;
+			problemProperty.problemsPerRequest = 500;
+			const problems = await lc.problemsOfProperty(problemProperty);
+			expect(problems.length).toBeGreaterThan(3000);
 		});
 	});
 

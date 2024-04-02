@@ -15,6 +15,7 @@ import type {
 	DailyChallenge,
 	Problem,
 	ProblemList,
+	QueryParams,
 	RecentSubmission,
 	Submission,
 	SubmissionDetail,
@@ -263,15 +264,7 @@ export class LeetCode extends EventEmitter {
 		offset = 0,
 		limit = 100,
 		filters = {},
-	}: {
-		category?: string;
-		offset?: number;
-		limit?: number;
-		filters?: {
-			difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
-			tags?: string[];
-		};
-	} = {}): Promise<ProblemList> {
+	}: QueryParams = {}): Promise<ProblemList> {
 		await this.initialized;
 
 		const variables = { categorySlug: category, skip: offset, limit, filters };

@@ -1,6 +1,16 @@
 //////////////////////////////////////////////////////////////////////////////
 // GraphQL
-export interface DetailedProblem2 {
+export interface QueryParams {
+	category?: string;
+	offset?: number;
+	limit?: number;
+	filters?: {
+		difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
+		tags?: string[];
+	};
+}
+
+export interface DetailedProblem {
 	allowDiscuss?: boolean;
 	article?: Article;
 	categoryTitle?: string;
@@ -24,7 +34,7 @@ export interface DetailedProblem2 {
 	langToValidPlayground?: Record<string, boolean>;
 	libraryUrl?: string | null;
 	likes?: number;
-	metadata?: string;
+	metaData?: string;
 	mysqlSchemas?: string[];
 	nextChallengePairs?: NextChallengePair[] | null;
 	note?: string | null;
@@ -132,55 +142,7 @@ export interface ChallengeQuestion {
 
 export interface ProblemFieldDetails {
 	title: string;
-	property:
-		| 'allowDiscuss'
-		| 'article'
-		| 'categoryTitle'
-		| 'codeDefinition'
-		| 'codeSnippets'
-		| 'companyTagStats'
-		| 'content'
-		| 'difficulty'
-		| 'dislikes'
-		| 'enableRunCode'
-		| 'enableSubmit'
-		| 'enableTestMode'
-		| 'frequency'
-		| 'hints'
-		| 'infoVerified'
-		| 'infoVerified'
-		| 'interpretUrl'
-		| 'isLiked'
-		| 'isPaidOnly'
-		| 'judgeType'
-		| 'judgerAvailable'
-		| 'langToValidPlayground'
-		| 'libraryUrl'
-		| 'likes'
-		| 'metaData'
-		| 'mysqlSchemas'
-		| 'nextChallengePairs'
-		| 'note'
-		| 'questionDetailUrl'
-		| 'questionFrontendId'
-		| 'questionId'
-		| 'questionTitle'
-		| 'questionTitleSlug'
-		| 'questionType'
-		| 'questionType'
-		| 'SampleTestCase'
-		| 'sessionId'
-		| 'similarQuestions'
-		| 'solution'
-		| 'stats'
-		| 'status'
-		| 'submitUrl'
-		| 'title'
-		| 'titleSlug'
-		| 'titleSlug'
-		| 'topicTags'
-		| 'translatedContent'
-		| 'translatedTitle';
+	property: keyof DetailedProblem;
 	graphql: string;
 	enable: boolean;
 	private: boolean;
