@@ -232,20 +232,6 @@ export interface MatchedUser {
 	activeBadge: Badge | null;
 }
 
-export interface RecentSubmission {
-	id: string;
-	isPending: string;
-	memory: string;
-	runtime: string;
-	time: string;
-	timestamp: string;
-	title: string;
-	titleSlug: string;
-	statusDisplay: string;
-	lang: string;
-	url: string;
-}
-
 export interface UserProfile {
 	allQuestionsCount: AllQuestionsCount[];
 	matchedUser: MatchedUser | null;
@@ -363,6 +349,20 @@ export type SubmissionStatus =
 	| 'Output Limit Exceeded'
 	| 'Compile Error'
 	| 'Runtime Error';
+
+export interface RecentSubmission {
+	id: string;
+	isPending: string;
+	memory: string;
+	runtime: string;
+	time: string;
+	timestamp: string;
+	title: string;
+	titleSlug: string;
+	statusDisplay: SubmissionStatus;
+	lang: string;
+	url: string;
+}
 
 export interface Submission {
 	id: number;
