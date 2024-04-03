@@ -14,9 +14,11 @@ import {
 	ProblemFieldDetails,
 	QueryParams,
 	RecentSubmission,
+	Submission,
 	SubmissionDetail,
 } from './leetcode-types';
 import problemProperties from './problem-properties';
+import { memoryStringToNumber, runtimeStringToNumber } from './utils';
 
 export class LeetCodeAdvanced extends LeetCode {
 	problemProperties = problemProperties;
@@ -97,23 +99,25 @@ export class LeetCodeAdvanced extends LeetCode {
 	/**
 	 * Get recent submission of current user.
 	 * Need to be authenticated
-	 * @returns RecentSubmission
+	 * @returns Submission
+	 * @returns null if there are no recent submissions
 	 */
-	public async recentSubmission(): Promise<RecentSubmission> {
+	public async recentSubmission(): Promise<Submission | null> {
 		const whoami = await this.whoami();
-		const recentSubmissions = await this.recent_submissions(whoami.username, 1);
-		return recentSubmissions[0];
+		return await this.recentSubmissionOfUser(whoami.username);
 	}
 
 	/**
 	 * Get detailed submission of current user.
 	 * Need to be authenticated
 	 * @returns SubmissionDetail
+	 * @returns null if there are no recent submissions
 	 */
-	public async recentSubmissionDetail(): Promise<SubmissionDetail> {
+	public async recentSubmissionDetail(): Promise<SubmissionDetail | null> {
 		const whoami = await this.whoami();
-		const recentSubmissions = await this.recent_submissions(whoami.username);
-		const submissionId = parseInt(recentSubmissions[0].id);
+		const recentSubmission = await this.recentSubmissionOfUser(whoami.username);
+		if (recentSubmission === null) return null;
+		const submissionId = recentSubmission.id;
 		return await this.submission(submissionId);
 	}
 
@@ -121,11 +125,13 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * Get recent submission of a user by username
 	 * Need to be authenticated
 	 * @param username
-	 * @returns RecentSubmission
+	 * @returns Submission
+	 * @returns null if there are no recent submissions
 	 */
-	public async recentSubmissionOfUser(username: string): Promise<RecentSubmission> {
-		const recent_submissions = await this.recent_submissions(username);
-		return recent_submissions[0];
+	public async recentSubmissionOfUser(username: string): Promise<Submission | null> {
+		const recentSubmissions = await this.recent_submissions(username, 1);
+		if (recentSubmissions.length == 0) return null;
+		return this.convertRecentSubmissionToSubmissionType(recentSubmissions[0]);
 	}
 
 	/**
@@ -133,11 +139,12 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * Need to be authenticated
 	 * @param username
 	 * @returns SubmissionDetail
+	 * @returns null if there are no recent submissions
 	 */
-	public async recentSubmissionDetailOfUser(username: string): Promise<SubmissionDetail> {
-		const recentSubmissions = await this.recent_submissions(username);
-		const submissionId = parseInt(recentSubmissions[0].id);
-		return await this.submission(submissionId);
+	public async recentSubmissionDetailOfUser(username: string): Promise<SubmissionDetail | null> {
+		const recentSubmission = await this.recentSubmissionOfUser(username);
+		if (recentSubmission === null) return null;
+		return await this.submission(recentSubmission.id);
 	}
 
 	/**
@@ -236,6 +243,22 @@ export class LeetCodeAdvanced extends LeetCode {
 		}
 
 		return problems;
+	}
+
+	private convertRecentSubmissionToSubmissionType(recentSubmission: RecentSubmission): Submission {
+		return {
+			id: parseInt(recentSubmission.id, 10),
+			lang: recentSubmission.lang,
+			time: recentSubmission.time,
+			timestamp: parseInt(recentSubmission.timestamp, 10),
+			statusDisplay: recentSubmission.statusDisplay,
+			runtime: runtimeStringToNumber(recentSubmission.runtime),
+			url: recentSubmission.url,
+			isPending: recentSubmission.isPending !== 'Not Pending',
+			title: recentSubmission.title,
+			memory: memoryStringToNumber(recentSubmission.memory),
+			titleSlug: recentSubmission.titleSlug,
+		} as Submission;
 	}
 
 	private combineProperties(arr1: DetailedProblem[], arr2: DetailedProblem[]) {
