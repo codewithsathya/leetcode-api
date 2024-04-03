@@ -93,8 +93,9 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			'should be able to get recent submission',
 			async () => {
 				const recentSubmission = await lc.recentSubmission();
+				expect(recentSubmission).not.toBeNull();
 				expect(recentSubmission).toBeTruthy();
-				expect(recentSubmission.id.length).toBeGreaterThan(0);
+				expect(recentSubmission?.id).toBeGreaterThan(0);
 			},
 		);
 
@@ -102,8 +103,9 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			'should be able to get detailed submission of a user',
 			async () => {
 				const recentSubmission = await lc.recentSubmissionOfUser('jacoblincool');
+				expect(recentSubmission).not.toBeNull();
 				expect(recentSubmission).toBeTruthy();
-				expect(recentSubmission.id.length).toBeGreaterThan(0);
+				expect(recentSubmission?.id).toBeGreaterThan(0);
 			},
 		);
 
@@ -111,8 +113,9 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			'should be able to get recent detailed submission',
 			async () => {
 				const recentSubmission = await lc.recentSubmissionDetail();
-				expect(recentSubmission.code.length).toBeGreaterThan(0);
-				expect(recentSubmission.id).toBeGreaterThan(0);
+				expect(recentSubmission).not.toBeNull();
+				expect(recentSubmission?.code.length).toBeGreaterThan(0);
+				expect(recentSubmission?.id).toBeGreaterThan(0);
 			},
 		);
 
@@ -120,8 +123,9 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			'should be able to get recent detailed submission of a user',
 			async () => {
 				const recentSubmission = await lc.recentSubmissionDetailOfUser('jacoblincool');
-				expect(recentSubmission.code.length).toBeGreaterThan(0);
-				expect(recentSubmission.id).toBeGreaterThan(0);
+				expect(recentSubmission).not.toBeNull();
+				expect(recentSubmission?.code.length).toBeGreaterThan(0);
+				expect(recentSubmission?.id).toBeGreaterThan(0);
 			},
 		);
 	});
