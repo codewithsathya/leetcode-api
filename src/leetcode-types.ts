@@ -10,6 +10,28 @@ export interface QueryParams {
 	};
 }
 
+export interface LeetcodeProblem {
+	difficulty: ProblemDifficulty;
+	topicTags: TopicTag[];
+	companyTagStats: OfficialCompanyTagStats | null;
+	frequency: number;
+	similarQuestions: SimilarQuestion[] | string;
+	questionFrontendId: string;
+	isPaidOnly: boolean;
+	solution: LeetcodeSolution;
+	questionId: string;
+	likes: string;
+	dislikes: string;
+	stats: Stats | string;
+	titleSlug: string;
+}
+
+export interface LeetcodeSolution {
+	url: string;
+	paidOnly: boolean;
+	hasVideoSolution: boolean;
+}
+
 export interface DetailedProblem {
 	allowDiscuss?: boolean;
 	article?: Article;
