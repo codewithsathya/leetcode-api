@@ -12,6 +12,7 @@ query problemsetQuestionList(
 	) {
 		total: totalNum
 		questions: data {
+			title
 			difficulty
 			topicTags {
 				name
