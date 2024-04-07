@@ -35,7 +35,6 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 
 		it('should be able to get problem types', async () => {
 			const problemTypes = await lc.getProblemTypes();
-			console.log(problemTypes);
 			expect(Object.keys(problemTypes).length).toBeGreaterThan(3000);
 		});
 
