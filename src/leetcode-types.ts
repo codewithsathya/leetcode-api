@@ -11,6 +11,7 @@ export interface QueryParams {
 }
 
 export interface LeetcodeProblem {
+	title: string;
 	difficulty: ProblemDifficulty;
 	topicTags: TopicTag[];
 	companyTagStats: OfficialCompanyTagStats | null;
@@ -20,8 +21,8 @@ export interface LeetcodeProblem {
 	isPaidOnly: boolean;
 	solution: LeetcodeSolution;
 	questionId: string;
-	likes: string;
-	dislikes: string;
+	likes: number;
+	dislikes: number;
 	stats: Stats | string;
 	titleSlug: string;
 }
