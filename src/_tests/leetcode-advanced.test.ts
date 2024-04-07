@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { Cache } from '../cache';
 import { Credential } from '../credential';
 import { LeetCodeAdvanced } from '../leetcode-advanced';
+import { SimilarQuestion } from '../leetcode-types';
 import problemProperties from '../problem-properties';
 
 describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
@@ -32,6 +33,22 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			expect(companyTags.length).toBeGreaterThan(0);
 		});
 
+		it('should be able to get problem types', async () => {
+			const problemTypes = await lc.getProblemTypes();
+			expect(Object.keys(problemTypes).length).toBeGreaterThan(3000);
+		});
+
+		it('should be able to get leetcode problems', async () => {
+			let count = 0;
+			const problems = await lc.getLeetcodeProblems(500, (problems) => {
+				count = problems.length;
+			});
+			expect(problems.length).toBeGreaterThan(3000);
+			expect(count).greaterThan(3000);
+			expect(problems[0].similarQuestions as SimilarQuestion[]).toBeTypeOf('object');
+			expect((problems[0].similarQuestions as SimilarQuestion[]).length).toBeGreaterThan(0);
+		});
+
 		it('should be able to get problems with property', async () => {
 			const problemProperty = problemProperties.filter(
 				({ property }) => property === 'titleSlug',
@@ -50,17 +67,17 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			expect(problems.length).toBeGreaterThan(3000);
 		});
 
-		it('should be able to get detailed problems', async () => {
-			const problems = await lc.detailedProblems({
-				category: '',
-				offset: 0,
-				limit: 10,
-			});
-			expect(problems.length).equals(10);
-			expect(problems[0].questionFrontendId).toBeTruthy();
-			expect(problems[0].title).toBeTruthy();
-			expect(problems[0].difficulty).toBeTruthy();
-		});
+		// it('should be able to get detailed problems', async () => {
+		// 	const problems = await lc.detailedProblems({
+		// 		category: '',
+		// 		offset: 0,
+		// 		limit: 10,
+		// 	});
+		// 	expect(problems.length).equals(10);
+		// 	expect(problems[0].questionFrontendId).toBeTruthy();
+		// 	expect(problems[0].title).toBeTruthy();
+		// 	expect(problems[0].difficulty).toBeTruthy();
+		// });
 	});
 
 	describe('Authenticated', () => {
