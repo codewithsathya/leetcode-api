@@ -1,0 +1,36 @@
+query problemsetQuestionList(
+	$categorySlug: String
+	$limit: Int
+	$skip: Int
+	$filters: QuestionListFilterInput
+) {
+	problemsetQuestionList: questionList(
+		categorySlug: $categorySlug
+		limit: $limit
+		skip: $skip
+		filters: $filters
+	) {
+		total: totalNum
+		questions: data {
+			difficulty
+			topicTags {
+				name
+			}
+			companyTagStats
+			frequency
+			similarQuestions
+			questionFrontendId
+			isPaidOnly
+			solution {
+				url
+				paidOnly
+				hasVideoSolution
+			}
+			questionId
+			likes
+			dislikes
+			stats
+			titleSlug
+		}
+	}
+}
