@@ -38,6 +38,12 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			expect(Object.keys(problemTypes).length).toBeGreaterThan(3000);
 		});
 
+		it('should be able to get topic tags', async () => {
+			const topicTags = await lc.topicTags();
+			expect(Object.keys(topicTags).length).toBeGreaterThan(3000);
+			expect(topicTags['1'].length).greaterThanOrEqual(2);
+		});
+
 		it('should be able to get leetcode problems', async () => {
 			let count = 0;
 			const problems = await lc.getLeetcodeProblems(500, (problems) => {
