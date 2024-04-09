@@ -179,6 +179,16 @@ export interface AllCompanyTags {
 	companyTags: CompanyTagDetail[];
 }
 
+export interface MinimalCompanyTagDetail {
+	name: string;
+	questions: { questionFrontendId: string }[];
+}
+
+export interface TopicTagDetails {
+	questionFrontendId: string;
+	topicTags: { name: string }[];
+}
+
 export interface CompanyTagDetail {
 	id: string;
 	imgUrl: string;
