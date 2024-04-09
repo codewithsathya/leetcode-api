@@ -6,8 +6,10 @@ import COLLECT_EASTER_EGG from './graphql/collect-easter-egg.graphql?raw';
 import COMPANY_TAGS from './graphql/company-tags.graphql?raw';
 import LEETCODE_PROBLEMS_QUERY from './graphql/custom-problem.graphql?raw';
 import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?raw';
+import MINIMAL_COMPANY_TAGS from './graphql/minimal-company-tags.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
 import QUESTION_FRONTEND_IDS from './graphql/question-frontend-ids.graphql?raw';
+import TOPIC_TAGS from './graphql/topic-tags.graphql?raw';
 import { LeetCode } from './leetcode';
 import {
 	AllCompanyTags,
@@ -15,11 +17,13 @@ import {
 	DetailedProblem,
 	EasterEggStatus,
 	LeetcodeProblem,
+	MinimalCompanyTagDetail,
 	ProblemFieldDetails,
 	QueryParams,
 	RecentSubmission,
 	Submission,
 	SubmissionDetail,
+	TopicTagDetails,
 } from './leetcode-types';
 import problemProperties from './problem-properties';
 import { memoryStringToNumber, runtimeStringToNumber } from './utils';
@@ -72,6 +76,29 @@ export class LeetCodeAdvanced extends LeetCode {
 	}
 
 	/**
+	 * Get all topic tags for each question with question frontend id as key
+	 * @returns
+	 */
+	public async topicTags(): Promise<Record<string, string[]>> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: TOPIC_TAGS,
+			variables: {
+				categorySlug: '',
+				filters: {},
+				skip: 0,
+				limit: 1000000,
+			},
+		});
+		const problems = data.problemsetQuestionList.questions as TopicTagDetails[];
+		const questionIdToTopicTags: Record<string, string[]> = {};
+		for (const problem of problems) {
+			questionIdToTopicTags[problem.questionFrontendId] = problem.topicTags.map(({ name }) => name);
+		}
+		return questionIdToTopicTags;
+	}
+
+	/**
 	 * Get all company tags with their details.
 	 * For company wise question details, need to be authenticated and should be premium user.
 	 * @returns
@@ -82,6 +109,32 @@ export class LeetCodeAdvanced extends LeetCode {
 			query: COMPANY_TAGS,
 		});
 		return (data as AllCompanyTags).companyTags;
+	}
+
+	/**
+	 * Get question frontend id to company tags mapping.
+	 * Need to be authenticated and should be premium user
+	 * @returns
+	 */
+	public async getQuestionIdCompanyTagsMapping(): Promise<Record<string, string[]>> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: MINIMAL_COMPANY_TAGS,
+		});
+		const companyTags = data.companyTags as MinimalCompanyTagDetail[];
+		if (companyTags === null) {
+			throw new Error(`You should have leetcode premium to access company tags information`);
+		}
+		const questionIdToCompanyTags: Record<string, string[]> = {};
+		for (const companyTag of companyTags) {
+			for (const { questionFrontendId: id } of companyTag.questions) {
+				if (!questionIdToCompanyTags[id]) {
+					questionIdToCompanyTags[id] = [];
+				}
+				questionIdToCompanyTags[id].push(companyTag.name);
+			}
+		}
+		return questionIdToCompanyTags;
 	}
 
 	/**
