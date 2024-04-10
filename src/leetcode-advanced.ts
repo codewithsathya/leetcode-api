@@ -141,16 +141,12 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * Checkin to collect a coin
 	 * Need to be authenticated
 	 */
-	public async checkIn(): Promise<void> {
+	public async checkIn(): Promise<boolean> {
 		await this.initialized;
-		const userStatus = await this.whoami();
-		if (!userStatus.checkedInToday) {
-			await this.graphql({
-				query: CHECKIN,
-			});
-		} else {
-			throw new Error(`User already checked in`);
-		}
+		const { data } = await this.graphql({
+			query: CHECKIN,
+		});
+		return data.checkin.checkedIn as boolean;
 	}
 
 	/**
