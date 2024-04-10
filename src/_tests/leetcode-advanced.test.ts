@@ -113,6 +113,14 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 		);
 
 		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
+			'should be able to checkin or throw error saying user already checked in',
+			async () => {
+				const checkedIn = await lc.checkIn();
+				expect(checkedIn).toBe(false);
+			},
+		);
+
+		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
 			'should be able to get recent submission',
 			async () => {
 				const recentSubmission = await lc.recentSubmission();
