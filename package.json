@@ -6,9 +6,7 @@
 	"types": "lib/index.d.ts",
 	"exports": {
 		"import": "./lib/index.js",
-		"require": "./lib/index.cjs",
-		"types": "./lib/index.d.ts",
-		"default": "./lib/index.js"
+		"require": "./lib/index.cjs"
 	},
 	"files": [
 		"lib"
@@ -37,23 +35,25 @@
 	},
 	"devDependencies": {
 		"@changesets/changelog-github": "^0.5.0",
-		"@changesets/cli": "^2.27.1",
-		"@types/node": "20.11.24",
-		"@typescript-eslint/eslint-plugin": "7.1.0",
-		"@typescript-eslint/parser": "7.1.0",
-		"@vitest/coverage-v8": "^1.3.1",
+		"@changesets/cli": "^2.27.8",
+		"@eslint/eslintrc": "^3.1.0",
+		"@eslint/js": "^9.11.0",
+		"@types/node": "22.5.5",
+		"@typescript-eslint/eslint-plugin": "8.6.0",
+		"@typescript-eslint/parser": "8.6.0",
+		"@vitest/coverage-v8": "^2.1.1",
 		"dotenv": "16.4.5",
-		"eslint": "8.57.0",
+		"eslint": "9.11.0",
 		"eslint-config-prettier": "9.1.0",
-		"husky": "^9.0.11",
-		"lint-staged": "^15.2.2",
-		"prettier": "3.2.5",
-		"prettier-plugin-organize-imports": "^3.2.4",
+		"husky": "^9.1.6",
+		"lint-staged": "^15.2.10",
+		"prettier": "3.3.3",
+		"prettier-plugin-organize-imports": "^4.1.0",
 		"rollup-plugin-string": "^3.0.0",
-		"tsup": "8.0.2",
-		"typedoc": "0.25.9",
-		"typescript": "5.3.3",
-		"vitest": "^1.3.1"
+		"tsup": "8.3.0",
+		"typedoc": "0.26.7",
+		"typescript": "5.5.4",
+		"vitest": "^2.1.1"
 	},
 	"bugs": {
 		"url": "https://github.com/JacobLinCool/LeetCode-Query/issues"
@@ -72,5 +72,5 @@
 			"prettier --write"
 		]
 	},
-	"packageManager": "pnpm@8.15.4"
+	"packageManager": "pnpm@9.11.0"
 }
