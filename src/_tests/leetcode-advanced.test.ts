@@ -73,17 +73,22 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			expect(problems.length).toBeGreaterThan(3000);
 		});
 
-		// it('should be able to get detailed problems', async () => {
-		// 	const problems = await lc.detailedProblems({
-		// 		category: '',
-		// 		offset: 0,
-		// 		limit: 10,
-		// 	});
-		// 	expect(problems.length).equals(10);
-		// 	expect(problems[0].questionFrontendId).toBeTruthy();
-		// 	expect(problems[0].title).toBeTruthy();
-		// 	expect(problems[0].difficulty).toBeTruthy();
-		// });
+		it('should be able to get title slug question number mapping', async () => {
+			const mapping = await lc.getTitleSlugQuestionNumberMapping();
+			expect(Object.keys(mapping).length).toBeGreaterThan(3000);
+		});
+
+		it('should be able to get detailed problems', async () => {
+			const problems = await lc.detailedProblems({
+				category: '',
+				offset: 0,
+				limit: 10,
+			});
+			expect(problems.length).equals(10);
+			expect(problems[0].questionFrontendId).toBeTruthy();
+			expect(problems[0].title).toBeTruthy();
+			expect(problems[0].difficulty).toBeTruthy();
+		});
 	});
 
 	describe('Authenticated', () => {

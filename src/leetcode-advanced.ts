@@ -9,6 +9,7 @@ import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?r
 import MINIMAL_COMPANY_TAGS from './graphql/minimal-company-tags.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
 import QUESTION_FRONTEND_IDS from './graphql/question-frontend-ids.graphql?raw';
+import TITLE_SLUG_QUESTION_NUMBER_MAPPING_QUERY from './graphql/title-slug-question-number-mapping.graphql?raw';
 import TOPIC_TAGS from './graphql/topic-tags.graphql?raw';
 import { LeetCode } from './leetcode';
 import {
@@ -363,6 +364,29 @@ export class LeetCodeAdvanced extends LeetCode {
 		}
 
 		return problems;
+	}
+
+	/**
+	 * Get title slug question number mapping for all leetcode questions
+	 * @returns Mapping
+	 */
+	public async getTitleSlugQuestionNumberMapping(): Promise<Record<string, string>> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: TITLE_SLUG_QUESTION_NUMBER_MAPPING_QUERY,
+			variables: {
+				categorySlug: '',
+				filters: {},
+				skip: 0,
+				limit: 100000,
+			},
+		});
+		const problems = data.problemsetQuestionList.questions as LeetcodeProblem[];
+		const mapping: Record<string, string> = {};
+		problems.forEach((problem) => {
+			mapping[problem.titleSlug] = problem.questionFrontendId;
+		});
+		return mapping;
 	}
 
 	private convertRecentSubmissionToSubmissionType(recentSubmission: RecentSubmission): Submission {
