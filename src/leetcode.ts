@@ -9,18 +9,18 @@ import PROBLEM from './graphql/problem.graphql?raw';
 import PROBLEMS from './graphql/problems.graphql?raw';
 import PROFILE from './graphql/profile.graphql?raw';
 import RECENT_SUBMISSIONS from './graphql/recent-submissions.graphql?raw';
-import SUBMISSIONS from './graphql/submissions.graphql?raw';
 import WHOAMI from './graphql/whoami.graphql?raw';
 import type {
 	DailyChallenge,
 	Problem,
 	ProblemList,
 	QueryParams,
-	RecentSubmission,
 	Submission,
 	SubmissionDetail,
+	SubmissionsDump,
 	UserContestInfo,
 	UserProfile,
+	UserSubmission,
 	Whoami,
 } from './leetcode-types';
 import { RateLimiter } from './mutex';
@@ -95,10 +95,6 @@ export class LeetCode extends EventEmitter {
 	 * @param username
 	 * @returns
 	 *
-	 * ```javascript
-	 * const leetcode = new LeetCode();
-	 * const profile = await leetcode.user_contest_info("jacoblincool");
-	 * ```
 	 */
 	public async user_contest_info(username: string): Promise<UserContestInfo> {
 		await this.initialized;
@@ -117,16 +113,16 @@ export class LeetCode extends EventEmitter {
 	 *
 	 * ```javascript
 	 * const leetcode = new LeetCode();
-	 * const submissions = await leetcode.recent_submissions("jacoblincool");
+	 * const submissions = await leetcode.recent_user_submissions("jacoblincool");
 	 * ```
 	 */
-	public async recent_submissions(username: string, limit = 20): Promise<RecentSubmission[]> {
+	public async recent_user_submissions(username: string, limit = 20): Promise<UserSubmission[]> {
 		await this.initialized;
 		const { data } = await this.graphql({
 			variables: { username, limit },
 			query: RECENT_SUBMISSIONS,
 		});
-		return (data.recentSubmissionList as RecentSubmission[]) || [];
+		return (data.recentSubmissionList as UserSubmission[]) || [];
 	}
 
 	/**
@@ -144,47 +140,58 @@ export class LeetCode extends EventEmitter {
 	public async submissions({
 		limit = 20,
 		offset = 0,
-		slug,
 	}: { limit?: number; offset?: number; slug?: string } = {}): Promise<Submission[]> {
-		await this.initialized;
-
-		const submissions: Submission[] = [];
-		const set = new Set<number>();
-
+		let allSubmissions: Submission[] = [];
 		let cursor = offset;
-		while (submissions.length < limit) {
-			const { data } = await this.graphql({
-				variables: {
-					offset: cursor,
-					limit: limit - submissions.length > 20 ? 20 : limit - submissions.length,
-					slug,
-				},
-				query: SUBMISSIONS,
+		while (allSubmissions.length < limit) {
+			const { submissions_dump: submissions, has_next } = await this.submissionsApi({
+				offset: cursor,
+				limit: limit <= 20 ? limit : 20,
 			});
-
-			for (const submission of data.submissionList.submissions) {
-				submission.id = parseInt(submission.id, 10);
-				submission.timestamp = parseInt(submission.timestamp, 10) * 1000;
-				submission.isPending = submission.isPending !== 'Not Pending';
-				submission.runtime = parseInt(submission.runtime, 10) || 0;
-				submission.memory = parseFloat(submission.memory) || 0;
-
-				if (set.has(submission.id)) {
-					continue;
-				}
-
-				set.add(submission.id);
-				submissions.push(submission);
-			}
-
-			if (!data.submissionList.hasNext) {
+			allSubmissions = [...allSubmissions, ...submissions];
+			if (!has_next) {
 				break;
 			}
-
 			cursor += 20;
 		}
+		return allSubmissions;
+	}
 
-		return submissions;
+	private async submissionsApi({ offset = 0, limit = 20 }) {
+		await this.initialized;
+		if (limit > 20) limit = 20;
+		try {
+			await this.limiter.lock();
+			const res = await fetch(`${BASE_URL}/api/submissions/?offset=${offset}&limit=${limit}`, {
+				method: 'GET',
+				headers: {
+					'content-type': 'application/json',
+					origin: BASE_URL,
+					referer: BASE_URL,
+					cookie: `csrftoken=${this.credential.csrf || ''}; LEETCODE_SESSION=${
+						this.credential.session || ''
+					};`,
+					'x-csrftoken': this.credential.csrf || '',
+					'user-agent': USER_AGENT,
+				},
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			if (res.headers.has('set-cookie')) {
+				const cookies = parse_cookie(res.headers.get('set-cookie') || '');
+
+				if (cookies['csrftoken']) {
+					this.credential.csrf = cookies['csrftoken'];
+					this.emit('update-csrf', this.credential);
+				}
+			}
+			this.limiter.unlock();
+			return (await res.json()) as Promise<SubmissionsDump>;
+		} catch (err) {
+			this.limiter.unlock();
+			throw err;
+		}
 	}
 
 	/**
@@ -192,6 +199,8 @@ export class LeetCode extends EventEmitter {
 	 * Need to be authenticated.
 	 * @param id Submission ID
 	 * @returns
+	 * @deprecated
+	 *
 	 */
 	public async submission(id: number): Promise<SubmissionDetail> {
 		await this.initialized;
@@ -279,13 +288,8 @@ export class LeetCode extends EventEmitter {
 
 	/**
 	 * Get information of a problem by its slug.
-	 * @param slug Problem slug
+	 * @param slug
 	 * @returns
-	 *
-	 * ```javascript
-	 * const leetcode = new LeetCode();
-	 * const problem = await leetcode.problem("two-sum");
-	 * ```
 	 */
 	public async problem(slug: string): Promise<Problem> {
 		await this.initialized;

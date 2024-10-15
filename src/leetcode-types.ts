@@ -268,7 +268,7 @@ export interface MatchedUser {
 export interface UserProfile {
 	allQuestionsCount: AllQuestionsCount[];
 	matchedUser: MatchedUser | null;
-	recentSubmissionList: RecentSubmission[] | null;
+	recentSubmissionList: UserSubmission[] | null;
 }
 
 export interface Contest {
@@ -383,7 +383,7 @@ export type SubmissionStatus =
 	| 'Compile Error'
 	| 'Runtime Error';
 
-export interface RecentSubmission {
+export interface UserSubmission {
 	id: string;
 	isPending: string;
 	memory: string;
@@ -399,16 +399,29 @@ export interface RecentSubmission {
 
 export interface Submission {
 	id: number;
+	question_id: number;
 	lang: string;
+	lang_name: string;
 	time: string;
 	timestamp: number;
-	statusDisplay: SubmissionStatus;
-	runtime: number;
+	status: number;
+	status_display: SubmissionStatus;
+	runtime: string;
 	url: string;
-	isPending: boolean;
+	is_pending: boolean;
 	title: string;
 	memory: number;
-	titleSlug: string;
+	code: string;
+	compare_result: string;
+	title_slug: string;
+	has_notes: boolean;
+	flat_type: number;
+}
+
+export interface SubmissionsDump {
+	submissions_dump: Submission[];
+	has_next: string;
+	last_key: string;
 }
 
 export interface Whoami {

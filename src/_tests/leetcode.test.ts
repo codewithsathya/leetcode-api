@@ -32,7 +32,7 @@ describe('LeetCode', { timeout: 15_000 }, () => {
 		});
 
 		it("should be able to get user's recent submissions", async () => {
-			const recent_submissions = await lc.recent_submissions('jacoblincool', 10);
+			const recent_submissions = await lc.recent_user_submissions('jacoblincool', 10);
 			expect(recent_submissions.length).toBe(10);
 		});
 
@@ -92,7 +92,7 @@ describe('LeetCode', { timeout: 15_000 }, () => {
 		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
 			"should be able to get user's submissions",
 			async () => {
-				const submissions = await lc.submissions({ limit: 100, offset: 0 });
+				const submissions = await lc.submissions({ limit: 20, offset: 0 });
 				expect(submissions.length).toBeGreaterThan(0);
 			},
 		);
@@ -110,10 +110,10 @@ describe('LeetCode', { timeout: 15_000 }, () => {
 		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
 			'should be able to get submission details',
 			async () => {
-				const submission = await lc.submission(333333333);
-				expect(submission.id).toBe(333333333);
-				expect(submission.memory).toBe(34096000);
-				expect(submission.runtime).toBe(200);
+				const submission = await lc.submission(1416118091);
+				expect(submission.id).toBe(1416118091);
+				expect(submission.memory).toBe(18152000);
+				expect(submission.runtime).toBe(8);
 			},
 		);
 	});
