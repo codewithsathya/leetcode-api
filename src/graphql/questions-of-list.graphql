@@ -1,0 +1,19 @@
+query favoriteQuestionList($favoriteSlug: String!, $filter: FavoriteQuestionFilterInput) {
+	favoriteQuestionList(favoriteSlug: $favoriteSlug, filter: $filter) {
+		questions {
+			questionFrontendId
+			status
+			title
+			titleSlug
+			translatedTitle
+			isInMyFavorites
+			frequency
+			topicTags {
+				name
+				slug
+			}
+		}
+		totalLength
+		hasMore
+	}
+}

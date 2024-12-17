@@ -1,0 +1,10 @@
+query myFavoriteList {
+	myCreatedFavoriteList {
+		favorites {
+			name
+			slug
+		}
+		hasMore
+		totalLength
+	}
+}

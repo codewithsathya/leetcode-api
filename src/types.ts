@@ -53,3 +53,21 @@ export interface LeetCodeGraphQLResponse {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	data: UserProfile | UserSubmission[] | any;
 }
+
+export interface QuestionOfList {
+	difficulty: string;
+	id: number;
+	paidOnly: boolean;
+	questionFrontendId: string;
+	status: string;
+	title: string;
+	titleSlug: string;
+	topicTags: Array<{
+		title: string;
+		slug: string;
+	}>;
+	isInMyFavorites: boolean;
+	frequency: number | null;
+	acRate: number | null;
+	__typename: string;
+}
