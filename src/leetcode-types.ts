@@ -491,3 +491,8 @@ export interface DailyChallenge {
 	link: string;
 	question: Problem;
 }
+
+export interface List {
+	name: string;
+	slug: string;
+}

@@ -144,5 +144,18 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 				expect(parseInt(recentSubmission?.id as string)).toBeGreaterThan(0);
 			},
 		);
+
+		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
+			'should be able to get leetcode lists of user',
+			async () => {
+				const lists = await lc.getLists();
+				expect(lists).not.toBeNull();
+				expect(lists).toBeTruthy();
+				expect(lists.length).greaterThan(10);
+				expect(lists[0].slug).not.toBeNull();
+				expect(lists[0].slug).toBeTruthy();
+				expect(lists[0].slug.length).toBeGreaterThan(2);
+			},
+		);
 	});
 });

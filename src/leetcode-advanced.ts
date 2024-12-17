@@ -6,6 +6,7 @@ import COLLECT_EASTER_EGG from './graphql/collect-easter-egg.graphql?raw';
 import COMPANY_TAGS from './graphql/company-tags.graphql?raw';
 import LEETCODE_PROBLEMS_QUERY from './graphql/custom-problem.graphql?raw';
 import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?raw';
+import LISTS from './graphql/lists.graphql?raw';
 import MINIMAL_COMPANY_TAGS from './graphql/minimal-company-tags.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
 import QUESTION_FRONTEND_IDS from './graphql/question-frontend-ids.graphql?raw';
@@ -18,6 +19,7 @@ import {
 	DetailedProblem,
 	EasterEggStatus,
 	LeetcodeProblem,
+	List,
 	MinimalCompanyTagDetail,
 	ProblemFieldDetails,
 	QueryParams,
@@ -187,6 +189,19 @@ export class LeetCodeAdvanced extends LeetCode {
 			},
 		});
 		return data.problemsetQuestionList.total as number;
+	}
+
+	/**
+	 * Get leetcode lists of the user
+	 * Need to be authenticated
+	 * @returns array of leetcode lists
+	 */
+	public async getLists(): Promise<Array<List>> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: LISTS,
+		});
+		return data.myCreatedFavoriteList.favorites as Array<List>;
 	}
 
 	public async getProblemTypes(): Promise<Record<string, string[]>> {
