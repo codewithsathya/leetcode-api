@@ -157,5 +157,18 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 				expect(lists[0].slug.length).toBeGreaterThan(2);
 			},
 		);
+
+		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
+			'should be able to get questions of a leetcode list of user',
+			async () => {
+				const questions = await lc.getQuestionsOfList('rev4di7h');
+				expect(questions).not.toBeNull();
+				expect(questions).toBeTruthy();
+				expect(questions.length).greaterThan(10);
+				expect(questions[0].questionFrontendId).not.toBeNull();
+				expect(questions[0].questionFrontendId).toBeTruthy();
+				expect(questions[0].questionFrontendId.length).toBeGreaterThan(0);
+			},
+		);
 	});
 });

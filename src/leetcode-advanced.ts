@@ -10,6 +10,7 @@ import LISTS from './graphql/lists.graphql?raw';
 import MINIMAL_COMPANY_TAGS from './graphql/minimal-company-tags.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
 import QUESTION_FRONTEND_IDS from './graphql/question-frontend-ids.graphql?raw';
+import QUESTIONS_OF_LIST from './graphql/questions-of-list.graphql?raw';
 import TITLE_SLUG_QUESTION_NUMBER_MAPPING_QUERY from './graphql/title-slug-question-number-mapping.graphql?raw';
 import TOPIC_TAGS from './graphql/topic-tags.graphql?raw';
 import { LeetCode } from './leetcode';
@@ -28,6 +29,7 @@ import {
 	UserSubmission,
 } from './leetcode-types';
 import problemProperties from './problem-properties';
+import { QuestionOfList } from './types';
 
 export class LeetCodeAdvanced extends LeetCode {
 	problemProperties = problemProperties;
@@ -202,6 +204,23 @@ export class LeetCodeAdvanced extends LeetCode {
 			query: LISTS,
 		});
 		return data.myCreatedFavoriteList.favorites as Array<List>;
+	}
+
+	/**
+	 * Get all questions of a leetcode list
+	 * Need to be authenticated
+	 * @param slug slug id of the leetcode list
+	 * @returns array of questions
+	 */
+	public async getQuestionsOfList(slug: string): Promise<Array<QuestionOfList>> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: QUESTIONS_OF_LIST,
+			variables: {
+				favoriteSlug: slug,
+			},
+		});
+		return data.favoriteQuestionList.questions as Array<QuestionOfList>;
 	}
 
 	public async getProblemTypes(): Promise<Record<string, string[]>> {
