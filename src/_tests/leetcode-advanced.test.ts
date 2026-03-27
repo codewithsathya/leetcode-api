@@ -46,7 +46,7 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 
 		it('should be able to get leetcode problems', async () => {
 			let count = 0;
-			const problems = await lc.getLeetcodeProblems(500, (problems) => {
+			const problems = await lc.getLeetcodeProblems(100, (problems) => {
 				count = problems.length;
 			});
 			expect(problems.length).toBeGreaterThan(3000);
@@ -68,7 +68,7 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 				({ property }) => property === 'titleSlug',
 			)[0];
 			problemProperty.needRequestChunking = true;
-			problemProperty.problemsPerRequest = 500;
+			problemProperty.problemsPerRequest = 100;
 			const problems = await lc.problemsOfProperty(problemProperty);
 			expect(problems.length).toBeGreaterThan(3000);
 		});
