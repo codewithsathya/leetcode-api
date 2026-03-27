@@ -1,6 +1,6 @@
 {
 	"name": "@leetnotion/leetcode-api",
-	"version": "1.10.0",
+	"version": "1.11.0",
 	"description": "Get user profiles, submissions, and problems on LeetCode.",
 	"type": "module",
 	"types": "lib/index.d.ts",
@@ -30,30 +30,30 @@
 	"dependencies": {
 		"@fetch-impl/cross-fetch": "^1.0.0",
 		"@fetch-impl/fetcher": "^1.0.0",
-		"cross-fetch": "^4.0.0",
-		"eventemitter3": "^5.0.1"
+		"cross-fetch": "^4.1.0",
+		"eventemitter3": "^5.0.4"
 	},
 	"devDependencies": {
-		"@changesets/changelog-github": "^0.5.0",
-		"@changesets/cli": "^2.27.8",
-		"@eslint/eslintrc": "^3.1.0",
-		"@eslint/js": "^9.11.0",
+		"@changesets/changelog-github": "^0.5.2",
+		"@changesets/cli": "^2.30.0",
+		"@eslint/eslintrc": "^3.3.5",
+		"@eslint/js": "^9.39.4",
 		"@types/node": "22.5.5",
 		"@typescript-eslint/eslint-plugin": "8.6.0",
 		"@typescript-eslint/parser": "8.6.0",
-		"@vitest/coverage-v8": "^2.1.1",
+		"@vitest/coverage-v8": "^2.1.9",
 		"dotenv": "16.4.5",
 		"eslint": "9.11.0",
 		"eslint-config-prettier": "9.1.0",
-		"husky": "^9.1.6",
-		"lint-staged": "^15.2.10",
+		"husky": "^9.1.7",
+		"lint-staged": "^15.5.2",
 		"prettier": "3.3.3",
-		"prettier-plugin-organize-imports": "^4.1.0",
+		"prettier-plugin-organize-imports": "^4.3.0",
 		"rollup-plugin-string": "^3.0.0",
 		"tsup": "8.3.0",
 		"typedoc": "0.26.7",
 		"typescript": "5.5.4",
-		"vitest": "^2.1.1"
+		"vitest": "^2.1.9"
 	},
 	"bugs": {
 		"url": "https://github.com/JacobLinCool/LeetCode-Query/issues"

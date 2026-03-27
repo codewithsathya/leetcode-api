@@ -138,7 +138,7 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 		it.skipIf(!process.env['TEST_LEETCODE_SESSION'])(
 			'should be able to get recent submission of a user',
 			async () => {
-				const recentSubmission = await lc.recentSubmissionOfUser('jacoblincool');
+				const recentSubmission = await lc.recentSubmissionOfUser('codewithsathya');
 				expect(recentSubmission).not.toBeNull();
 				expect(recentSubmission).toBeTruthy();
 				expect(parseInt(recentSubmission?.id as string)).toBeGreaterThan(0);
