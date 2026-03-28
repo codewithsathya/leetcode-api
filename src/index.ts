@@ -15,4 +15,6 @@ export * from './credential-cn';
 export * from './fetch';
 export * from './leetcode';
 export * from './leetcode-advanced';
+export * from './leetcode-cli';
+export * from './leetcode-cli-types';
 export * from './mutex';
