@@ -92,19 +92,24 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * Get all topic tags for each question with question frontend id as key
 	 * @returns
 	 */
-	public async topicTags(): Promise<Record<string, string[]>> {
+	public async topicTags({
+		limit = 10000,
+		problemsPerRequest = 100,
+		skip = 0,
+	}: { limit?: number; problemsPerRequest?: number; skip?: number } = {}): Promise<
+		Record<string, string[]>
+	> {
 		await this.initialized;
-		const limit = 100;
 		const questionIdToTopicTags: Record<string, string[]> = {};
-		const noOfProblems = await this.noOfProblems();
-		for (let skip = 0; skip < noOfProblems; skip += limit) {
+		const noOfProblems = Math.min(skip + limit, await this.noOfProblems());
+		for (let offset = skip; offset < noOfProblems; offset += problemsPerRequest) {
 			const { data } = await this.graphql({
 				query: TOPIC_TAGS,
 				variables: {
 					categorySlug: '',
 					filters: {},
-					skip,
-					limit,
+					skip: offset,
+					limit: problemsPerRequest,
 				},
 			});
 			const problems = data.problemsetQuestionList.questions as TopicTagDetails[];
@@ -255,21 +260,37 @@ export class LeetCodeAdvanced extends LeetCode {
 		return problemTypes;
 	}
 
-	public async getLeetcodeProblems(
-		limit = 100,
-		callbackFn: ((problems: LeetcodeProblem[]) => void) | null = null,
-	): Promise<LeetcodeProblem[]> {
+	/**
+	 * Get leetcode problems with optional parameters.
+	 * @param option
+	 * @param option.limit - Total number of problems to fetch. Default is 10000.
+	 * @param option.problemsPerRequest - Number of problems to fetch per request. Default is 100.
+	 * @param option.skip - Number of problems to skip from the start. Default is 0.
+	 * @param option.callbackFn - Optional callback function that will be called after each request with the currently fetched problems.
+	 * @returns Array of LeetcodeProblem
+	 */
+	public async getLeetcodeProblems({
+		limit = 10000,
+		problemsPerRequest = 100,
+		skip = 0,
+		callbackFn = null,
+	}: {
+		limit?: number;
+		problemsPerRequest?: number;
+		skip?: number;
+		callbackFn?: ((problems: LeetcodeProblem[]) => void) | null;
+	} = {}): Promise<LeetcodeProblem[]> {
 		await this.initialized;
-		const noOfProblems = await this.noOfProblems();
+		const noOfProblems = Math.min(skip + limit, await this.noOfProblems());
 		let problems: LeetcodeProblem[] = [];
-		for (let skip = 0; skip < noOfProblems; skip += limit) {
+		for (let offset = skip; offset < noOfProblems; offset += problemsPerRequest) {
 			const { data } = await this.graphql({
 				query: LEETCODE_PROBLEMS_QUERY,
 				variables: {
 					categorySlug: '',
 					filters: {},
-					skip,
-					limit,
+					skip: offset,
+					limit: problemsPerRequest,
 				},
 			});
 			const consolidatedProblems = data.problemsetQuestionList.questions as LeetcodeProblem[];

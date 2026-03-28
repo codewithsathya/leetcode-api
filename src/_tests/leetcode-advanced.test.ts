@@ -46,15 +46,48 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 			expect(topicTags['1'].length).greaterThanOrEqual(2);
 		});
 
+		it('should be able to get topic tags with custom options', async () => {
+			const topicTags = await lc.topicTags({ limit: 150, problemsPerRequest: 50 });
+			const keys = Object.keys(topicTags);
+			expect(keys.length).toBeGreaterThan(0);
+			expect(keys.length).toBeLessThanOrEqual(150);
+		});
+
+		it('should be able to get topic tags with skip', async () => {
+			const topicTags = await lc.topicTags({ limit: 100, skip: 50 });
+			const keys = Object.keys(topicTags);
+			expect(keys.length).toBeGreaterThan(0);
+			expect(keys.length).toBeLessThanOrEqual(100);
+		});
+
 		it('should be able to get leetcode problems', async () => {
 			let count = 0;
-			const problems = await lc.getLeetcodeProblems(100, (problems) => {
-				count = problems.length;
+			const problems = await lc.getLeetcodeProblems({
+				problemsPerRequest: 100,
+				callbackFn: (problems) => {
+					count = problems.length;
+				},
 			});
 			expect(problems.length).toBeGreaterThan(3000);
 			expect(count).greaterThan(3000);
 			expect(problems[0].similarQuestions as SimilarQuestion[]).toBeTypeOf('object');
 			expect((problems[0].similarQuestions as SimilarQuestion[]).length).toBeGreaterThan(0);
+		});
+
+		it('should be able to get leetcode problems with custom options', async () => {
+			const problems = await lc.getLeetcodeProblems({
+				limit: 150,
+				problemsPerRequest: 50,
+				skip: 0,
+			});
+			expect(problems.length).toBeLessThanOrEqual(150);
+			expect(problems.length).toBeGreaterThan(0);
+		});
+
+		it('should be able to get leetcode problems with skip', async () => {
+			const problems = await lc.getLeetcodeProblems({ limit: 100, skip: 50 });
+			expect(problems.length).toBeLessThanOrEqual(100);
+			expect(problems.length).toBeGreaterThan(0);
 		});
 
 		it('should be able to get problems with property', async () => {
