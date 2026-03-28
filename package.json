@@ -1,6 +1,6 @@
 {
 	"name": "@leetnotion/leetcode-api",
-	"version": "1.11.0",
+	"version": "2.0.0",
 	"description": "Get user profiles, submissions, and problems on LeetCode.",
 	"type": "module",
 	"types": "lib/index.d.ts",
@@ -25,7 +25,7 @@
 		"leetcode",
 		"api"
 	],
-	"author": "JacobLinCool <jacoblincool@gmail.com> (https://github.com/JacobLinCool)",
+	"author": "codewithsathya <codewithsathya@gmail.com> (https://github.com/codewithsathya)",
 	"license": "MIT",
 	"dependencies": {
 		"@fetch-impl/cross-fetch": "^1.0.0",
@@ -56,12 +56,12 @@
 		"vitest": "^2.1.9"
 	},
 	"bugs": {
-		"url": "https://github.com/JacobLinCool/LeetCode-Query/issues"
+		"url": "https://github.com/codewithsathya/leetcode-api/issues"
 	},
-	"homepage": "https://jacoblincool.github.io/LeetCode-Query/",
+	"homepage": "https://codewithsathya.com/",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/JacobLinCool/LeetCode-Query.git"
+		"url": "git+https://github.com/codewithsathya/leetcode-api.git"
 	},
 	"lint-staged": {
 		"*.ts": [
