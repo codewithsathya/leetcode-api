@@ -1,52 +1,121 @@
-# LeetCode Query
+# @leetnotion/leetcode-api
 
-The API to get user profiles, submissions, and problems on LeetCode, with highly customizable GraphQL API and Rate Limiter.
+A TypeScript library for interacting with LeetCode's API. Supports both LeetCode.com and LeetCode.cn, with authenticated and unauthenticated access, rate limiting, caching, and custom GraphQL queries.
+
+## Installation
+
+```bash
+npm install @leetnotion/leetcode-api
+# or
+pnpm add @leetnotion/leetcode-api
+```
 
 ## Features
 
 ### Without Authentication
 
-- [x] Get Public User Profile.
-- [x] Get User's Recent Submissions. (Public, Max: 20)
-- [x] Get User Contest Records. (thanks to [@laporchen](https://github.com/laporchen))
-- [x] Get All Problem List, or with filter of difficulty and tags.
-- [x] Get Problem Detail.
-- [x] Get Daily Challenge.
+- Get public user profile
+- Get user's recent submissions (max: 20)
+- Get user contest records
+- Get problem list with optional filters (difficulty, tags)
+- Get problem detail by slug
+- Get daily challenge
+- Get problem types for all questions
+- Get title slug to question number mapping
+- Get topic tags for all questions
+- Get company tags
 
-### Authenticated
+### With Authentication
 
-- [x] Get All Submissions of The Authenticated User.
-- [x] Get Submission Details, including the code and percentiles.
+- Get all submissions of the authenticated user
+- Get submission details (code, percentiles)
+- Check in to collect a coin
+- Get and collect easter eggs
+- Get user's LeetCode lists and questions within a list
+- Get company tags per question (premium)
 
-### Other
+### Advanced
 
-- [x] Customable GraphQL Query API.
-- [x] Customable Rate Limiter. (Default: 20 req / 10 sec)
-- [x] Customable Fetcher.
+- `LeetCodeAdvanced` class with detailed problem fetching, custom problem properties, and batch operations
+- `LeetCodeCN` class for LeetCode.cn
+- Customizable GraphQL query API
+- Customizable rate limiter (default: 20 req / 10 sec)
+- Customizable fetcher (e.g., use Playwright for browser-based requests)
+- In-memory TTL cache (replaceable)
 
-## Examples
+## Usage
 
-### Get An User's Public Profile
-
-Includes recent submissions and posts.
+### Get a User's Public Profile
 
 ```typescript
-import { LeetCode } from 'leetcode-query';
+import { LeetCode } from '@leetnotion/leetcode-api';
 
 const leetcode = new LeetCode();
 const user = await leetcode.user('username');
 ```
 
-### Get All Of Your Submissions
+### Get Daily Challenge
 
 ```typescript
-import { LeetCode, Credential } from 'leetcode-query';
+import { LeetCode } from '@leetnotion/leetcode-api';
+
+const leetcode = new LeetCode();
+const daily = await leetcode.daily();
+```
+
+### Get Problem Detail
+
+```typescript
+import { LeetCode } from '@leetnotion/leetcode-api';
+
+const leetcode = new LeetCode();
+const problem = await leetcode.problem('two-sum');
+```
+
+### Get Problems with Filters
+
+```typescript
+import { LeetCode } from '@leetnotion/leetcode-api';
+
+const leetcode = new LeetCode();
+const problems = await leetcode.problems({
+    category: 'algorithms',
+    offset: 0,
+    limit: 50,
+    filters: { difficulty: 'MEDIUM' },
+});
+```
+
+### Get All Submissions (Authenticated)
+
+```typescript
+import { LeetCode, Credential } from '@leetnotion/leetcode-api';
 
 const credential = new Credential();
 await credential.init('YOUR-LEETCODE-SESSION-COOKIE');
 
 const leetcode = new LeetCode(credential);
-console.log(await leetcode.submissions(100, 0));
+const submissions = await leetcode.submissions({ limit: 100, offset: 0 });
+```
+
+### Get Problem Types
+
+```typescript
+import { LeetCodeAdvanced } from '@leetnotion/leetcode-api';
+
+const leetcode = new LeetCodeAdvanced();
+const problemTypes = await leetcode.getProblemTypes();
+// { "1": "algorithms", "595": "database", ... }
+```
+
+### Get Title Slug to Question Number Mapping
+
+```typescript
+import { LeetCodeAdvanced } from '@leetnotion/leetcode-api';
+
+const leetcode = new LeetCodeAdvanced();
+const mapping = await leetcode.getTitleSlugQuestionNumberMapping();
+// { "two-sum": "1", "add-two-numbers": "2", ... }
 ```
 
 ### Use Custom Fetcher
@@ -54,48 +123,39 @@ console.log(await leetcode.submissions(100, 0));
 You can use your own fetcher, for example, fetch through a real browser.
 
 ```typescript
-import { LeetCode, fetcher } from 'leetcode-query';
+import { LeetCode, fetcher } from '@leetnotion/leetcode-api';
 import { chromium } from 'playwright-extra';
 import stealth from 'puppeteer-extra-plugin-stealth';
 
-// setup browser
 const _browser = chromium.use(stealth()).launch();
 const _page = _browser
-	.then((browser) => browser.newPage())
-	.then(async (page) => {
-		await page.goto('https://leetcode.com');
-		return page;
-	});
+    .then((browser) => browser.newPage())
+    .then(async (page) => {
+        await page.goto('https://leetcode.com');
+        return page;
+    });
 
-// use a custom fetcher
 fetcher.set(async (...args) => {
-	const page = await _page;
-
-	const res = await page.evaluate(async (args) => {
-		const res = await fetch(...args);
-		return {
-			body: await res.text(),
-			status: res.status,
-			statusText: res.statusText,
-			headers: Object.fromEntries(res.headers),
-		};
-	}, args);
-
-	return new Response(res.body, res);
+    const page = await _page;
+    const res = await page.evaluate(async (args) => {
+        const res = await fetch(...args);
+        return {
+            body: await res.text(),
+            status: res.status,
+            statusText: res.statusText,
+            headers: Object.fromEntries(res.headers),
+        };
+    }, args);
+    return new Response(res.body, res);
 });
 
-// use as normal
 const lc = new LeetCode();
 const daily = await lc.daily();
 console.log(daily);
 await _browser.then((browser) => browser.close());
 ```
 
-## Documentation
-
-Documentation for this package is available on <https://jacoblincool.github.io/LeetCode-Query/>.
-
 ## Links
 
-- NPM Package: <https://www.npmjs.com/package/leetcode-query>
-- GitHub Repository: <https://github.com/JacobLinCool/LeetCode-Query/>
+- NPM Package: <https://www.npmjs.com/package/@leetnotion/leetcode-api>
+- GitHub Repository: <https://github.com/codewithsathya/leetcode-api>
