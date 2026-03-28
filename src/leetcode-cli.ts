@@ -3,6 +3,7 @@ import { BASE_URL, USER_AGENT } from './constants';
 import fetch from './fetch';
 import { LeetCode } from './leetcode';
 import type {
+	FavoritesResponse,
 	InterpretResponse,
 	JudgeCheckResponse,
 	JudgeResult,
@@ -217,5 +218,72 @@ export class LeetCodeCLI extends LeetCode {
 
 		const raw = await this.pollJudgeResult(submitResult.submission_id);
 		return this.formatResult(raw, false);
+	}
+
+	/**
+	 * Get user's favorite lists.
+	 * @returns FavoritesResponse with private and public favorites
+	 */
+	public async getFavorites(): Promise<FavoritesResponse> {
+		await this.initialized;
+
+		await this.limiter.lock();
+		try {
+			const res = await fetch(`${BASE_URL}/list/api/questions`, {
+				method: 'GET',
+				headers: this.authHeaders(),
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			this.handleCsrf(res);
+			return (await res.json()) as FavoritesResponse;
+		} finally {
+			this.limiter.unlock();
+		}
+	}
+
+	/**
+	 * Star (favorite) a problem.
+	 * @param questionId - The problem's question ID
+	 * @param favoriteIdHash - The favorite list hash (from getFavorites)
+	 */
+	public async star(questionId: string, favoriteIdHash: string): Promise<void> {
+		await this.initialized;
+		await this.graphql({
+			operationName: 'addQuestionToFavorite',
+			variables: { favoriteIdHash, questionId },
+			query: `mutation addQuestionToFavorite($favoriteIdHash: String!, $questionId: String!) {
+  addQuestionToFavorite(favoriteIdHash: $favoriteIdHash, questionId: $questionId) {
+    ok
+    error
+    favoriteIdHash
+    questionId
+    __typename
+  }
+}`,
+		});
+	}
+
+	/**
+	 * Unstar (unfavorite) a problem.
+	 * @param questionId - The problem's question ID
+	 * @param favoriteIdHash - The favorite list hash (from getFavorites)
+	 */
+	public async unstar(questionId: string, favoriteIdHash: string): Promise<void> {
+		await this.initialized;
+		await this.graphql({
+			operationName: 'removeQuestionFromFavorite',
+			variables: { favoriteIdHash, questionId },
+			query: `mutation removeQuestionFromFavorite($favoriteIdHash: String!, $questionId: String!) {
+  removeQuestionFromFavorite(favoriteIdHash: $favoriteIdHash, questionId: $questionId) {
+    ok
+    error
+    favoriteIdHash
+    questionId
+    __typename
+  }
+}`,
+		});
 	}
 }
