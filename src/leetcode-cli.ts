@@ -1,6 +1,7 @@
 // src/leetcode-cli.ts
 import { BASE_URL, USER_AGENT } from './constants';
 import fetch from './fetch';
+import TOP_VOTED_SOLUTION from './graphql/top-voted-solution.graphql?raw';
 import { LeetCode } from './leetcode';
 import type {
 	CategoryProblem,
@@ -14,6 +15,7 @@ import type {
 	SubmitCodeOptions,
 	SubmitResponse,
 	TestCodeOptions,
+	TopVotedSolution,
 } from './leetcode-cli-types';
 import { parse_cookie } from './utils';
 
@@ -436,5 +438,49 @@ export class LeetCodeCLI extends LeetCode {
 		} finally {
 			this.limiter.unlock();
 		}
+	}
+
+	/**
+	 * Get the top voted solution from discussions for a problem.
+	 * @param slug - Problem title slug
+	 * @param questionId - Problem question ID (numeric string)
+	 * @param lang - Programming language tag to filter by (optional)
+	 * @returns TopVotedSolution or null if no solution found
+	 */
+	public async getTopVotedSolution(
+		slug: string,
+		questionId: string,
+		lang?: string,
+	): Promise<TopVotedSolution | null> {
+		await this.initialized;
+
+		const tags = lang ? [lang === 'python3' ? 'python' : lang] : [];
+
+		const res = await this.graphql({
+			query: TOP_VOTED_SOLUTION,
+			variables: {
+				questionId,
+				orderBy: 'most_votes',
+				skip: 0,
+				query: '',
+				first: 1,
+				tags,
+			},
+		});
+
+		const edges = res?.data?.questionTopicsList?.edges;
+		if (!edges || edges.length === 0) {
+			return null;
+		}
+
+		const node = edges[0].node;
+		return {
+			id: node.id,
+			title: node.title,
+			content: (node.post.content || '').replace(/\\n/g, '\n').replace(/\\t/g, '\t'),
+			author: node.post.author.username,
+			votes: node.post.voteCount,
+			link: `https://leetcode.com/problems/${slug}/discuss/${node.id}`,
+		};
 	}
 }

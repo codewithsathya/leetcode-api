@@ -150,3 +150,13 @@ export interface ProblemSubmission {
 	runtime: string;
 	memory: string;
 }
+
+/** Top voted solution from discussions */
+export interface TopVotedSolution {
+	id: string;
+	title: string;
+	content: string;
+	author: string;
+	votes: number;
+	link: string;
+}
