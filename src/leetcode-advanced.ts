@@ -1,6 +1,7 @@
 import { cache as default_cache } from './cache';
-import { PROBLEM_CATEGORIES } from './constants';
+import { BASE_URL, PROBLEM_CATEGORIES, USER_AGENT } from './constants';
 import Credential from './credential';
+import fetch from './fetch';
 import CHECKIN from './graphql/checkin.graphql?raw';
 import COLLECT_EASTER_EGG from './graphql/collect-easter-egg.graphql?raw';
 import COMPANY_TAGS from './graphql/company-tags.graphql?raw';
@@ -9,9 +10,7 @@ import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?r
 import LISTS from './graphql/lists.graphql?raw';
 import MINIMAL_COMPANY_TAGS from './graphql/minimal-company-tags.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
-import QUESTION_FRONTEND_IDS from './graphql/question-frontend-ids.graphql?raw';
 import QUESTIONS_OF_LIST from './graphql/questions-of-list.graphql?raw';
-import TITLE_SLUG_QUESTION_NUMBER_MAPPING_QUERY from './graphql/title-slug-question-number-mapping.graphql?raw';
 import TOPIC_TAGS from './graphql/topic-tags.graphql?raw';
 import { LeetCode } from './leetcode';
 import {
@@ -30,6 +29,17 @@ import {
 } from './leetcode-types';
 import problemProperties from './problem-properties';
 import { QuestionOfList } from './types';
+
+interface CategoryStatPair {
+	stat: {
+		frontend_question_id: number;
+		question__title_slug: string;
+	};
+}
+
+interface CategoryQuestionsResponse {
+	stat_status_pairs: CategoryStatPair[];
+}
 
 export class LeetCodeAdvanced extends LeetCode {
 	problemProperties = problemProperties;
@@ -82,21 +92,32 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * Get all topic tags for each question with question frontend id as key
 	 * @returns
 	 */
-	public async topicTags(): Promise<Record<string, string[]>> {
+	public async topicTags({
+		limit = 10000,
+		problemsPerRequest = 100,
+		skip = 0,
+	}: { limit?: number; problemsPerRequest?: number; skip?: number } = {}): Promise<
+		Record<string, string[]>
+	> {
 		await this.initialized;
-		const { data } = await this.graphql({
-			query: TOPIC_TAGS,
-			variables: {
-				categorySlug: '',
-				filters: {},
-				skip: 0,
-				limit: 1000000,
-			},
-		});
-		const problems = data.problemsetQuestionList.questions as TopicTagDetails[];
 		const questionIdToTopicTags: Record<string, string[]> = {};
-		for (const problem of problems) {
-			questionIdToTopicTags[problem.questionFrontendId] = problem.topicTags.map(({ name }) => name);
+		const noOfProblems = Math.min(skip + limit, await this.noOfProblems());
+		for (let offset = skip; offset < noOfProblems; offset += problemsPerRequest) {
+			const { data } = await this.graphql({
+				query: TOPIC_TAGS,
+				variables: {
+					categorySlug: '',
+					filters: {},
+					skip: offset,
+					limit: problemsPerRequest,
+				},
+			});
+			const problems = data.problemsetQuestionList.questions as TopicTagDetails[];
+			for (const problem of problems) {
+				questionIdToTopicTags[problem.questionFrontendId] = problem.topicTags.map(
+					({ name }) => name,
+				);
+			}
 		}
 		return questionIdToTopicTags;
 	}
@@ -223,45 +244,53 @@ export class LeetCodeAdvanced extends LeetCode {
 		return data.favoriteQuestionList.questions as Array<QuestionOfList>;
 	}
 
-	public async getProblemTypes(): Promise<Record<string, string[]>> {
-		const problemTypes: Record<string, string[]> = {};
+	/**
+	 * Get problem types for all questions.
+	 * @returns Record<string, string> - A mapping of question frontend IDs to their problem type.
+	 */
+	public async getProblemTypes(): Promise<Record<string, string>> {
+		const problemTypes: Record<string, string> = {};
 		for (const category of PROBLEM_CATEGORIES) {
-			const { data } = await this.graphql({
-				query: QUESTION_FRONTEND_IDS,
-				variables: {
-					categorySlug: category,
-					filters: {},
-					skip: 0,
-					limit: 100000,
-				},
-			});
-			const questions = data.problemsetQuestionList.questions as { questionFrontendId: string }[];
-			for (const question of questions) {
-				const id = question.questionFrontendId;
-				if (!problemTypes[id]) {
-					problemTypes[id] = [];
-				}
-				problemTypes[id] = [...problemTypes[id], category];
+			const pairs = await this.fetchCategoryQuestions(category);
+			for (const pair of pairs) {
+				const id = String(pair.stat.frontend_question_id);
+				problemTypes[id] = category;
 			}
 		}
 		return problemTypes;
 	}
 
-	public async getLeetcodeProblems(
-		limit = 500,
-		callbackFn: ((problems: LeetcodeProblem[]) => void) | null = null,
-	): Promise<LeetcodeProblem[]> {
+	/**
+	 * Get leetcode problems with optional parameters.
+	 * @param option
+	 * @param option.limit - Total number of problems to fetch. Default is 10000.
+	 * @param option.problemsPerRequest - Number of problems to fetch per request. Default is 100.
+	 * @param option.skip - Number of problems to skip from the start. Default is 0.
+	 * @param option.callbackFn - Optional callback function that will be called after each request with the currently fetched problems.
+	 * @returns Array of LeetcodeProblem
+	 */
+	public async getLeetcodeProblems({
+		limit = 10000,
+		problemsPerRequest = 100,
+		skip = 0,
+		callbackFn = null,
+	}: {
+		limit?: number;
+		problemsPerRequest?: number;
+		skip?: number;
+		callbackFn?: ((problems: LeetcodeProblem[]) => void) | null;
+	} = {}): Promise<LeetcodeProblem[]> {
 		await this.initialized;
-		const noOfProblems = await this.noOfProblems();
+		const noOfProblems = Math.min(skip + limit, await this.noOfProblems());
 		let problems: LeetcodeProblem[] = [];
-		for (let skip = 0; skip < noOfProblems; skip += limit) {
+		for (let offset = skip; offset < noOfProblems; offset += problemsPerRequest) {
 			const { data } = await this.graphql({
 				query: LEETCODE_PROBLEMS_QUERY,
 				variables: {
 					categorySlug: '',
 					filters: {},
-					skip,
-					limit,
+					skip: offset,
+					limit: problemsPerRequest,
 				},
 			});
 			const consolidatedProblems = data.problemsetQuestionList.questions as LeetcodeProblem[];
@@ -344,11 +373,18 @@ export class LeetCodeAdvanced extends LeetCode {
 		let problems: DetailedProblem[] = [];
 
 		if (!problemProperty.needRequestChunking) {
-			const { data } = await this.graphql({
-				variables,
-				query: this.getProblemsQuery({ requiredProperty: problemProperty.graphql }),
-			});
-			problems = data.problemsetQuestionList.questions as DetailedProblem[];
+			const chunkSize = 100;
+			const noOfProblems = Math.min(offset + limit, await this.noOfProblems());
+			variables.limit = Math.min(chunkSize, limit);
+			while (variables.skip < noOfProblems) {
+				const { data } = await this.graphql({
+					variables,
+					query: this.getProblemsQuery({ requiredProperty: problemProperty.graphql }),
+				});
+				problems = [...problems, ...(data.problemsetQuestionList.questions as DetailedProblem[])];
+				variables.skip += variables.limit;
+				variables.limit = Math.min(chunkSize, noOfProblems - variables.skip);
+			}
 		} else {
 			variables.limit = problemProperty.problemsPerRequest;
 			const noOfProblems = await this.noOfProblems();
@@ -377,22 +413,49 @@ export class LeetCodeAdvanced extends LeetCode {
 	 * @returns Mapping
 	 */
 	public async getTitleSlugQuestionNumberMapping(): Promise<Record<string, string>> {
-		await this.initialized;
-		const { data } = await this.graphql({
-			query: TITLE_SLUG_QUESTION_NUMBER_MAPPING_QUERY,
-			variables: {
-				categorySlug: '',
-				filters: {},
-				skip: 0,
-				limit: 100000,
-			},
-		});
-		const problems = data.problemsetQuestionList.questions as LeetcodeProblem[];
 		const mapping: Record<string, string> = {};
-		problems.forEach((problem) => {
-			mapping[problem.titleSlug] = problem.questionFrontendId;
-		});
+		for (const category of PROBLEM_CATEGORIES) {
+			const pairs = await this.fetchCategoryQuestions(category);
+			for (const pair of pairs) {
+				const slug = pair.stat.question__title_slug;
+				const id = String(pair.stat.frontend_question_id);
+				if (!mapping[slug]) {
+					mapping[slug] = id;
+				}
+			}
+		}
 		return mapping;
+	}
+
+	private async fetchCategoryQuestions(category: string): Promise<CategoryStatPair[]> {
+		await this.initialized;
+		try {
+			await this.limiter.lock();
+			const res = await fetch(`${BASE_URL}/api/problems/${category}/`, {
+				method: 'GET',
+				headers: {
+					'content-type': 'application/json',
+					origin: BASE_URL,
+					referer: BASE_URL,
+					cookie: `csrftoken=${this.credential.csrf || ''}; LEETCODE_SESSION=${
+						this.credential.session || ''
+					};`,
+					'x-csrftoken': this.credential.csrf || '',
+					'user-agent': USER_AGENT,
+				},
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			const rawText = await res.text();
+			const sanitized = rawText.replace(/[\n\r\t]/g, '');
+			const data = JSON.parse(sanitized) as CategoryQuestionsResponse;
+			this.limiter.unlock();
+			return data.stat_status_pairs;
+		} catch (err) {
+			this.limiter.unlock();
+			throw err;
+		}
 	}
 
 	private combineProperties(arr1: DetailedProblem[], arr2: DetailedProblem[]) {

@@ -78,7 +78,7 @@ export class LeetCode extends EventEmitter {
 	 *
 	 * ```javascript
 	 * const leetcode = new LeetCode();
-	 * const profile = await leetcode.user("jacoblincool");
+	 * const profile = await leetcode.user("codewithsathya");
 	 * ```
 	 */
 	public async user(username: string): Promise<UserProfile> {
@@ -113,7 +113,7 @@ export class LeetCode extends EventEmitter {
 	 *
 	 * ```javascript
 	 * const leetcode = new LeetCode();
-	 * const submissions = await leetcode.recent_user_submissions("jacoblincool");
+	 * const submissions = await leetcode.recent_user_submissions("codewitsathya");
 	 * ```
 	 */
 	public async recent_user_submissions(username: string, limit = 20): Promise<UserSubmission[]> {
