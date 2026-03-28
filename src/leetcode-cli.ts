@@ -7,6 +7,7 @@ import type {
 	InterpretResponse,
 	JudgeCheckResponse,
 	JudgeResult,
+	LeetCodeSession,
 	SubmitCodeOptions,
 	SubmitResponse,
 	TestCodeOptions,
@@ -285,5 +286,63 @@ export class LeetCodeCLI extends LeetCode {
   }
 }`,
 		});
+	}
+
+	/**
+	 * Helper for session management REST calls.
+	 */
+	private async sessionRequest(
+		method: string,
+		data: Record<string, unknown>,
+	): Promise<LeetCodeSession[]> {
+		await this.initialized;
+
+		await this.limiter.lock();
+		try {
+			const res = await fetch(`${BASE_URL}/session/`, {
+				method,
+				headers: this.authHeaders(),
+				body: JSON.stringify(data),
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			this.handleCsrf(res);
+			const body = (await res.json()) as { sessions: LeetCodeSession[] };
+			return body.sessions;
+		} finally {
+			this.limiter.unlock();
+		}
+	}
+
+	/**
+	 * List all coding sessions.
+	 */
+	public async getSessions(): Promise<LeetCodeSession[]> {
+		return this.sessionRequest('POST', {});
+	}
+
+	/**
+	 * Create a new coding session.
+	 * @param name - Session name
+	 */
+	public async createSession(name: string): Promise<LeetCodeSession[]> {
+		return this.sessionRequest('PUT', { func: 'create', name });
+	}
+
+	/**
+	 * Activate a coding session.
+	 * @param sessionId - Session ID to activate
+	 */
+	public async activateSession(sessionId: number): Promise<LeetCodeSession[]> {
+		return this.sessionRequest('PUT', { func: 'activate', target: sessionId });
+	}
+
+	/**
+	 * Delete a coding session.
+	 * @param sessionId - Session ID to delete
+	 */
+	public async deleteSession(sessionId: number): Promise<LeetCodeSession[]> {
+		return this.sessionRequest('DELETE', { target: sessionId });
 	}
 }
