@@ -429,8 +429,8 @@ export class LeetCodeAdvanced extends LeetCode {
 
 	private async fetchCategoryQuestions(category: string): Promise<CategoryStatPair[]> {
 		await this.initialized;
+		await this.limiter.lock();
 		try {
-			await this.limiter.lock();
 			const res = await fetch(`${BASE_URL}/api/problems/${category}/`, {
 				method: 'GET',
 				headers: {
@@ -450,11 +450,9 @@ export class LeetCodeAdvanced extends LeetCode {
 			const rawText = await res.text();
 			const sanitized = rawText.replace(/[\n\r\t]/g, '');
 			const data = JSON.parse(sanitized) as CategoryQuestionsResponse;
-			this.limiter.unlock();
 			return data.stat_status_pairs;
-		} catch (err) {
+		} finally {
 			this.limiter.unlock();
-			throw err;
 		}
 	}
 

@@ -1,5 +1,3 @@
-import type { UserProfile, UserSubmission } from './leetcode-types';
-
 ///////////////////////////////////////////////////////////////////////////////
 // Cache
 export interface CacheItem {
@@ -47,11 +45,15 @@ export interface LeetCodeGraphQLQuery {
 	variables?: { [key: string]: unknown };
 	query: string;
 	headers?: { [key: string]: string };
+	/**
+	 * Cache TTL in milliseconds. Set to 0 or omit to skip caching.
+	 */
+	cacheTime?: number;
 }
 
 export interface LeetCodeGraphQLResponse {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	data: UserProfile | UserSubmission[] | any;
+	data: any;
 }
 
 export interface QuestionOfList {

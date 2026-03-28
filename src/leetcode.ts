@@ -1,5 +1,5 @@
-import EventEmitter from 'eventemitter3';
-import { Cache, cache as default_cache } from './cache';
+import { BaseLeetCode } from './base-leetcode';
+import { Cache } from './cache';
 import { BASE_URL, USER_AGENT } from './constants';
 import { Credential } from './credential';
 import fetch from './fetch';
@@ -23,52 +23,23 @@ import type {
 	UserSubmission,
 	Whoami,
 } from './leetcode-types';
-import { RateLimiter } from './mutex';
-import type { LeetCodeGraphQLQuery, LeetCodeGraphQLResponse } from './types';
 import { parse_cookie } from './utils';
 
-export class LeetCode extends EventEmitter {
+export class LeetCode extends BaseLeetCode {
+	protected readonly baseUrl = BASE_URL;
+
 	/**
 	 * The credential this LeetCode instance is using.
 	 */
-	public credential: Credential;
-
-	/**
-	 * The internal cache.
-	 */
-	public cache: Cache;
-
-	/**
-	 * Used to ensure the LeetCode instance is initialized.
-	 */
-	protected initialized: Promise<boolean>;
-
-	/**
-	 * Rate limiter
-	 */
-	public limiter = new RateLimiter();
+	public declare credential: Credential;
 
 	/**
 	 * If a credential is provided, the LeetCode API will be authenticated. Otherwise, it will be anonymous.
 	 * @param credential
 	 * @param cache
 	 */
-	constructor(credential: Credential | null = null, cache = default_cache) {
-		super();
-		let initialize: CallableFunction;
-		this.initialized = new Promise((resolve) => {
-			initialize = resolve;
-		});
-
-		this.cache = cache;
-
-		if (credential) {
-			this.credential = credential;
-			setImmediate(() => initialize());
-		} else {
-			this.credential = new Credential();
-			this.credential.init().then(() => initialize());
-		}
+	constructor(credential: Credential | null = null, cache = new Cache()) {
+		super(credential, () => new Credential(), cache);
 	}
 
 	/**
@@ -86,6 +57,7 @@ export class LeetCode extends EventEmitter {
 		const { data } = await this.graphql({
 			variables: { username },
 			query: PROFILE,
+			cacheTime: 300_000, // 5 minutes
 		});
 		return data as UserProfile;
 	}
@@ -101,6 +73,7 @@ export class LeetCode extends EventEmitter {
 		const { data } = await this.graphql({
 			variables: { username },
 			query: CONTEST,
+			cacheTime: 300_000, // 5 minutes
 		});
 		return data as UserContestInfo;
 	}
@@ -121,6 +94,7 @@ export class LeetCode extends EventEmitter {
 		const { data } = await this.graphql({
 			variables: { username, limit },
 			query: RECENT_SUBMISSIONS,
+			cacheTime: 30_000, // 30 seconds
 		});
 		return (data.recentSubmissionList as UserSubmission[]) || [];
 	}
@@ -154,14 +128,14 @@ export class LeetCode extends EventEmitter {
 			}
 			cursor += 20;
 		}
-		return allSubmissions;
+		return allSubmissions.slice(0, limit);
 	}
 
 	private async submissionsApi({ offset = 0, limit = 20 }) {
 		await this.initialized;
 		if (limit > 20) limit = 20;
+		await this.limiter.lock();
 		try {
-			await this.limiter.lock();
 			const res = await fetch(`${BASE_URL}/api/submissions/?offset=${offset}&limit=${limit}`, {
 				method: 'GET',
 				headers: {
@@ -186,11 +160,9 @@ export class LeetCode extends EventEmitter {
 					this.emit('update-csrf', this.credential);
 				}
 			}
-			this.limiter.unlock();
 			return (await res.json()) as Promise<SubmissionsDump>;
-		} catch (err) {
+		} finally {
 			this.limiter.unlock();
-			throw err;
 		}
 	}
 
@@ -205,9 +177,8 @@ export class LeetCode extends EventEmitter {
 	public async submission(id: number): Promise<SubmissionDetail> {
 		await this.initialized;
 
+		await this.limiter.lock();
 		try {
-			await this.limiter.lock();
-
 			const res = await fetch(`${BASE_URL}/submissions/detail/${id}/`, {
 				headers: {
 					origin: BASE_URL,
@@ -220,7 +191,16 @@ export class LeetCode extends EventEmitter {
 			});
 			const raw = await res.text();
 			const data = raw.match(/var pageData = ({[^]+?});/)?.[1];
-			const json = new Function('return ' + data)();
+			if (!data) {
+				throw new Error('Failed to parse submission page data');
+			}
+			// Convert JS object literal to valid JSON by quoting unquoted keys
+			const jsonStr = data
+				.replace(/'/g, '"')
+				.replace(/(\w+)\s*:/g, '"$1":')
+				.replace(/,\s*}/g, '}')
+				.replace(/,\s*]/g, ']');
+			const json = JSON.parse(jsonStr);
 			const result = {
 				id: parseInt(json.submissionId),
 				problem_id: parseInt(json.questionId),
@@ -251,11 +231,9 @@ export class LeetCode extends EventEmitter {
 				0,
 			);
 
-			this.limiter.unlock();
 			return result;
-		} catch (err) {
+		} finally {
 			this.limiter.unlock();
-			throw err;
 		}
 	}
 
@@ -281,6 +259,7 @@ export class LeetCode extends EventEmitter {
 		const { data } = await this.graphql({
 			variables,
 			query: PROBLEMS,
+			cacheTime: 600_000, // 10 minutes
 		});
 
 		return data.problemsetQuestionList as ProblemList;
@@ -296,6 +275,7 @@ export class LeetCode extends EventEmitter {
 		const { data } = await this.graphql({
 			variables: { titleSlug: slug.toLowerCase().replace(/\s/g, '-') },
 			query: PROBLEM,
+			cacheTime: 600_000, // 10 minutes
 		});
 
 		return data.question as Problem;
@@ -315,6 +295,7 @@ export class LeetCode extends EventEmitter {
 		await this.initialized;
 		const { data } = await this.graphql({
 			query: DAILY,
+			cacheTime: 3_600_000, // 1 hour
 		});
 
 		return data.activeDailyCodingChallengeQuestion as DailyChallenge;
@@ -333,79 +314,6 @@ export class LeetCode extends EventEmitter {
 		});
 
 		return data.userStatus as Whoami;
-	}
-
-	/**
-	 * Use GraphQL to query LeetCode API.
-	 * @param query
-	 * @returns
-	 */
-	public async graphql(query: LeetCodeGraphQLQuery): Promise<LeetCodeGraphQLResponse> {
-		await this.initialized;
-
-		try {
-			await this.limiter.lock();
-
-			const BASE = BASE_URL;
-			const res = await fetch(`${BASE}/graphql`, {
-				method: 'POST',
-				headers: {
-					'content-type': 'application/json',
-					origin: BASE,
-					referer: BASE,
-					cookie: `csrftoken=${this.credential.csrf || ''}; LEETCODE_SESSION=${
-						this.credential.session || ''
-					};`,
-					'x-csrftoken': this.credential.csrf || '',
-					'user-agent': USER_AGENT,
-					...query.headers,
-				},
-				body: JSON.stringify(query),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-			}
-
-			this.emit('receive-graphql', res);
-
-			if (res.headers.has('set-cookie')) {
-				const cookies = parse_cookie(res.headers.get('set-cookie') || '');
-
-				if (cookies['csrftoken']) {
-					this.credential.csrf = cookies['csrftoken'];
-					this.emit('update-csrf', this.credential);
-				}
-			}
-
-			this.limiter.unlock();
-			return res.json() as Promise<LeetCodeGraphQLResponse>;
-		} catch (err) {
-			this.limiter.unlock();
-			throw err;
-		}
-	}
-
-	emit(event: 'receive-graphql', res: Response): boolean;
-	emit(event: 'update-csrf', credential: Credential): boolean;
-	emit(event: string, ...args: unknown[]): boolean;
-	emit(event: string, ...args: unknown[]): boolean {
-		return super.emit(event, ...args);
-	}
-
-	on(event: 'receive-graphql', listener: (res: Response) => void): this;
-	on(event: 'update-csrf', listener: (credential: Credential) => void): this;
-	on(event: string, listener: (...args: unknown[]) => void): this;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	on(event: string, listener: (...args: any[]) => void): this {
-		return super.on(event, listener);
-	}
-
-	once(event: 'receive-graphql', listener: (res: Response) => void): this;
-	once(event: 'update-csrf', listener: (credential: Credential) => void): this;
-	once(event: string, listener: (...args: unknown[]) => void): this;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	once(event: string, listener: (...args: any[]) => void): this {
-		return super.once(event, listener);
 	}
 }
 

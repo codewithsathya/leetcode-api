@@ -420,7 +420,7 @@ export interface Submission {
 
 export interface SubmissionsDump {
 	submissions_dump: Submission[];
-	has_next: string;
+	has_next: boolean;
 	last_key: string;
 }
 
