@@ -3,11 +3,14 @@ import { BASE_URL, USER_AGENT } from './constants';
 import fetch from './fetch';
 import { LeetCode } from './leetcode';
 import type {
+	CategoryProblem,
+	CategoryProblemsResponse,
 	FavoritesResponse,
 	InterpretResponse,
 	JudgeCheckResponse,
 	JudgeResult,
 	LeetCodeSession,
+	ProblemSubmission,
 	SubmitCodeOptions,
 	SubmitResponse,
 	TestCodeOptions,
@@ -344,5 +347,82 @@ export class LeetCodeCLI extends LeetCode {
 	 */
 	public async deleteSession(sessionId: number): Promise<LeetCodeSession[]> {
 		return this.sessionRequest('DELETE', { target: sessionId });
+	}
+
+	private static DIFFICULTY_MAP: Record<number, string> = {
+		1: 'Easy',
+		2: 'Medium',
+		3: 'Hard',
+	};
+
+	/**
+	 * Get problems for a category via the REST API.
+	 * Categories: 'algorithms', 'database', 'shell', 'concurrency'
+	 * @param category - The category slug
+	 * @returns Array of CategoryProblem
+	 */
+	public async categoryProblems(category: string): Promise<CategoryProblem[]> {
+		await this.initialized;
+
+		await this.limiter.lock();
+		try {
+			const res = await fetch(`${BASE_URL}/api/problems/${category}/`, {
+				method: 'GET',
+				headers: this.authHeaders(),
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			this.handleCsrf(res);
+			const json = (await res.json()) as CategoryProblemsResponse;
+
+			return json.stat_status_pairs
+				.filter((p) => !p.stat.question__hide)
+				.map((p) => ({
+					id: p.stat.question_id,
+					fid: p.stat.frontend_question_id,
+					name: p.stat.question__title,
+					slug: p.stat.question__title_slug,
+					link: `${BASE_URL}/problems/${p.stat.question__title_slug}/description/`,
+					locked: p.paid_only,
+					percent: (p.stat.total_acs * 100) / p.stat.total_submitted,
+					level: LeetCodeCLI.DIFFICULTY_MAP[p.difficulty.level] || 'Unknown',
+					state: p.status || 'None',
+					starred: p.is_favor,
+					category: json.category_slug,
+				}));
+		} finally {
+			this.limiter.unlock();
+		}
+	}
+
+	/**
+	 * Get submissions for a specific problem by its slug.
+	 * Returns the first 20 submissions.
+	 * @param slug - Problem title slug
+	 */
+	public async problemSubmissions(slug: string): Promise<ProblemSubmission[]> {
+		await this.initialized;
+
+		await this.limiter.lock();
+		try {
+			const res = await fetch(`${BASE_URL}/api/submissions/${slug}`, {
+				method: 'GET',
+				headers: this.authHeaders({
+					referer: `${BASE_URL}/problems/${slug}/`,
+				}),
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			this.handleCsrf(res);
+			const json = (await res.json()) as { submissions_dump: ProblemSubmission[] };
+			return json.submissions_dump.map((s) => ({
+				...s,
+				id: s.url.split('/').filter(Boolean).pop() || s.id,
+			}));
+		} finally {
+			this.limiter.unlock();
+		}
 	}
 }
