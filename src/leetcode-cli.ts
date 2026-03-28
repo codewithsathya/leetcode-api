@@ -49,25 +49,37 @@ export class LeetCodeCLI extends LeetCode {
 
 	/**
 	 * Poll /submissions/detail/$id/check/ until state is SUCCESS.
+	 * @param id - The submission or interpret ID to check
+	 * @param maxAttempts - Maximum number of polling attempts (default: 60)
 	 */
-	private async pollJudgeResult(id: string | number): Promise<JudgeCheckResponse> {
+	private async pollJudgeResult(
+		id: string | number,
+		maxAttempts = 60,
+	): Promise<JudgeCheckResponse> {
 		const url = `${BASE_URL}/submissions/detail/${id}/check/`;
-		while (true) {
-			const res = await fetch(url, {
-				method: 'GET',
-				headers: this.authHeaders(),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+		for (let attempt = 0; attempt < maxAttempts; attempt++) {
+			await this.limiter.lock();
+			let result: JudgeCheckResponse;
+			try {
+				const res = await fetch(url, {
+					method: 'GET',
+					headers: this.authHeaders(),
+				});
+				if (!res.ok) {
+					throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+				}
+				this.handleCsrf(res);
+				result = (await res.json()) as JudgeCheckResponse;
+			} finally {
+				this.limiter.unlock();
 			}
-			this.handleCsrf(res);
-			const result = (await res.json()) as JudgeCheckResponse;
 			if (result.state === 'SUCCESS') {
 				return result;
 			}
 			// Wait 1 second before polling again
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 		}
+		throw new Error(`Judge result polling timed out after ${maxAttempts} attempts for id: ${id}`);
 	}
 
 	/**
