@@ -27,13 +27,13 @@ describe('LeetCode', { timeout: 15_000 }, () => {
 		});
 
 		it('should be able to get user profile', async () => {
-			const user = await lc.user('jacoblincool');
-			expect(user.matchedUser?.username.toLowerCase()).toBe('jacoblincool');
+			const user = await lc.user('codewithsathya');
+			expect(user.matchedUser?.username.toLowerCase()).toBe('codewithsathya');
 		});
 
 		it("should be able to get user's recent submissions", async () => {
-			const recent_submissions = await lc.recent_user_submissions('jacoblincool', 10);
-			expect(recent_submissions.length).toBe(10);
+			const recent_submissions = await lc.recent_user_submissions('codewithsathya', 5);
+			expect(recent_submissions.length).toBe(5);
 		});
 
 		it('should be able to use graphql', async () => {

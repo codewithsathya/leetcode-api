@@ -1,45 +1,127 @@
-# leetcode-query
+# Changelog
 
-## 1.2.3
+All notable changes to `@leetnotion/leetcode-api` are documented in this file.
 
-### Patch Changes
+## [2.0.0] - 2026-03-28
 
-- [`cd8876b`](https://github.com/JacobLinCool/LeetCode-Query/commit/cd8876b0036ce36b7da8cf436b128e016b3ad0b4) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Disable response auto clone on receive-graphql hook
+### Breaking Changes
 
-- [`cd8876b`](https://github.com/JacobLinCool/LeetCode-Query/commit/cd8876b0036ce36b7da8cf436b128e016b3ad0b4) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Allow user to select their own fetch implementation with [@fetch-impl](https://github.com/JacobLinCool/fetch-impl)
+- Renamed package from `leetcode-query` to `@leetnotion/leetcode-api`
+- Changed `getLeetcodeProblems` and `topicTags` method signatures to use an options object instead of positional parameters
+- `getProblemTypes` now returns `Record<string, string>` instead of `Record<string, string[]>`
 
-## 1.2.2
+### Changed
 
-### Patch Changes
+- Replaced GraphQL-based `getProblemTypes` and `getTitleSlugQuestionNumberMapping` with REST API (`/api/problems/{category}/`) for faster single-request fetching
+- Adapted APIs to work with new LeetCode API changes
+- Switched CI/CD from self-hosted runners to GitHub-hosted runners (`ubuntu-latest`)
+- Upgraded npm package dependencies
 
-- [`bb47140`](https://github.com/JacobLinCool/LeetCode-Query/commit/bb47140ace98ba58da53e853d311fc8ab3f5b42c) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Works with no cookie presented in the response
+## [1.10.0] - 2024-12-17
 
-## 1.2.1
+### Added
 
-### Patch Changes
+- `getLists` method to fetch user's LeetCode lists (authenticated)
+- `getQuestionsOfList` method to fetch questions within a list (authenticated)
 
-- [`47ec5d4`](https://github.com/JacobLinCool/LeetCode-Query/commit/47ec5d425daafa15032ddb12b343dffc89fae0c2) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Fix fetcher shortcut
+## [1.9.0] - 2024-10-15
 
-## 1.2.0
+### Changed
 
-### Minor Changes
+- Refactored submission retrieval methods for improved reliability
 
-- [`9913aaf`](https://github.com/JacobLinCool/LeetCode-Query/commit/9913aafb01d74ce1b75e2406a6293fbb9014f835) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Allow library users to use their own fetch implementation
+## [1.8.4] - 2024-10-13
 
-## 1.1.0
+### Added
 
-### Minor Changes
+- `getTitleSlugQuestionNumberMapping` method to get title slug to question number mapping
 
-- [`c19d509`](https://github.com/JacobLinCool/LeetCode-Query/commit/c19d509bf33be7f26596aae855b9b4998fc2655f) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Support custom headers for GraphQL request
+## [1.8.3] - 2024-09-21
 
-## 1.0.1
+### Changed
 
-### Patch Changes
+- Updated dependency versions
 
-- [`a474021`](https://github.com/JacobLinCool/LeetCode-Query/commit/a474021dfc74aaf9352b98709d23a6ceb933cd63) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Check response status before returning GraphQL data
+## [1.8.2] - 2024-04-10
 
-## 1.0.0
+### Fixed
 
-### Major Changes
+- Fixed `checkIn` method
 
-- [#70](https://github.com/JacobLinCool/LeetCode-Query/pull/70) [`b28dd59`](https://github.com/JacobLinCool/LeetCode-Query/commit/b28dd595448835efd7286a3098b57e05f80cb856) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Remove dependency on node built-in module
+## [1.8.1] - 2024-04-10
+
+### Fixed
+
+- Fixed `checkIn` method
+
+## [1.8.0] - 2024-04-09
+
+### Added
+
+- `topicTags` method to get topic tags per question
+- `companyTags` method to get all company tag details
+- `getQuestionIdCompanyTagsMapping` method (premium, authenticated)
+
+## [1.7.1] - 2024-04-07
+
+### Fixed
+
+- Fixed type definitions
+
+## [1.7.0] - 2024-04-07
+
+### Added
+
+- `getLeetcodeProblems` method for fetching custom problems with configurable properties
+- `detailedProblems` and `problemsOfProperty` methods in `LeetCodeAdvanced`
+
+## [1.6.0] - 2024-04-03
+
+### Changed
+
+- `submissions` method now returns `Submission` type instead of `RecentSubmission`
+- Added changeset configuration for version management
+
+## [1.5.0] - 2024-04-02
+
+### Added
+
+- `recentSubmission` method to get the most recent submission of the authenticated user
+- `recentSubmissionOfUser` method to get the most recent submission of any user
+- `collectEasterEgg` method
+- `isEasterEggCollected` method
+
+## [1.4.0] - 2024-04-02
+
+### Added
+
+- `detailedProblems` method with configurable problem properties
+- `problemsOfProperty` method for granular problem data fetching
+- Configurable problem properties system
+
+## [1.3.0] - 2024-03-31
+
+### Added
+
+- `whoami` method to check authenticated user info
+- `checkIn` method to collect daily coin
+- `isEasterEggCollected` method
+- JSDoc comments across the API
+- `noOfProblems` method
+
+### Fixed
+
+- Removed unnecessary dependencies
+- Fixed `whoami` implementation
+
+## [1.2.3] - 2024-03-30
+
+### Added
+
+- Initial release of `@leetnotion/leetcode-api` (forked from `leetcode-query`)
+- Core `LeetCode` class with user profiles, submissions, problems, and daily challenge
+- `LeetCodeCN` class for LeetCode.cn support
+- `Credential` management for authenticated access
+- Rate limiter (20 req / 10 sec default)
+- Customizable fetcher and cache
+- GraphQL query API
