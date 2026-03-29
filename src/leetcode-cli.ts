@@ -1,6 +1,8 @@
 // src/leetcode-cli.ts
-import { BASE_URL, USER_AGENT } from './constants';
+import { BASE_URL, PROBLEM_CATEGORIES, USER_AGENT } from './constants';
 import fetch from './fetch';
+import ADD_QUESTION_TO_FAVORITE from './graphql/add-question-to-favorite.graphql?raw';
+import REMOVE_QUESTION_FROM_FAVORITE from './graphql/remove-question-from-favorite.graphql?raw';
 import TOP_VOTED_SOLUTION from './graphql/top-voted-solution.graphql?raw';
 import { LeetCode } from './leetcode';
 import type {
@@ -18,6 +20,13 @@ import type {
 	TopVotedSolution,
 } from './leetcode-cli-types';
 import { parse_cookie } from './utils';
+
+interface RestRequestOptions {
+	url: string;
+	method?: string;
+	headers?: Record<string, string>;
+	body?: Record<string, unknown>;
+}
 
 export class LeetCodeCLI extends LeetCode {
 	/**
@@ -50,6 +59,28 @@ export class LeetCodeCLI extends LeetCode {
 	}
 
 	/**
+	 * Make a rate-limited REST request with automatic CSRF handling.
+	 */
+	private async restRequest<T>(options: RestRequestOptions): Promise<T> {
+		const { url, method = 'GET', headers = {}, body } = options;
+		await this.limiter.lock();
+		try {
+			const res = await fetch(url, {
+				method,
+				headers: this.authHeaders(headers),
+				...(body ? { body: JSON.stringify(body) } : {}),
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			this.handleCsrf(res);
+			return (await res.json()) as T;
+		} finally {
+			this.limiter.unlock();
+		}
+	}
+
+	/**
 	 * Poll /submissions/detail/$id/check/ until state is SUCCESS.
 	 * @param id - The submission or interpret ID to check
 	 * @param maxAttempts - Maximum number of polling attempts (default: 60)
@@ -60,65 +91,45 @@ export class LeetCodeCLI extends LeetCode {
 	): Promise<JudgeCheckResponse> {
 		const url = `${BASE_URL}/submissions/detail/${id}/check/`;
 		for (let attempt = 0; attempt < maxAttempts; attempt++) {
-			await this.limiter.lock();
-			let result: JudgeCheckResponse;
-			try {
-				const res = await fetch(url, {
-					method: 'GET',
-					headers: this.authHeaders(),
-				});
-				if (!res.ok) {
-					throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-				}
-				this.handleCsrf(res);
-				result = (await res.json()) as JudgeCheckResponse;
-			} finally {
-				this.limiter.unlock();
-			}
+			const result = await this.restRequest<JudgeCheckResponse>({ url });
 			if (result.state === 'SUCCESS') {
 				return result;
 			}
-			// Wait 1 second before polling again
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 		}
 		throw new Error(`Judge result polling timed out after ${maxAttempts} attempts for id: ${id}`);
 	}
 
 	/**
-	 * Format raw judge check response into a JudgeResult.
+	 * Collect error messages from a judge check response.
 	 */
-	private formatResult(result: JudgeCheckResponse, isTest: boolean): JudgeResult {
+	private collectErrors(result: JudgeCheckResponse): string[] {
 		const errors: string[] = [];
 		for (const [key, value] of Object.entries(result)) {
 			if (/_error$/.test(key) && typeof value === 'string' && value.length > 0) {
 				errors.push(value);
 			}
 		}
+		return errors;
+	}
 
-		let answer: string | string[];
-		let expectedAnswer: string | string[];
-		let stdout: string;
+	/**
+	 * Format raw judge check response into a JudgeResult.
+	 */
+	private formatResult(result: JudgeCheckResponse, isTest: boolean): JudgeResult {
+		const errors = this.collectErrors(result);
 
-		if (isTest) {
-			let output = result.code_output || [];
-			if (Array.isArray(output)) {
-				output = output.join('\n');
-			}
-			stdout = output as string;
-			answer = result.code_answer || '';
-			expectedAnswer = result.expected_code_answer || '';
-		} else {
-			answer = (result.code_output as string) || '';
-			expectedAnswer = result.expected_output || '';
-			stdout = result.std_output || '';
-		}
+		const { answer, expectedAnswer, stdout } = isTest
+			? this.formatTestOutput(result)
+			: this.formatSubmitOutput(result);
 
 		const passed = result.total_correct || 0;
 		const total = result.total_testcases || 0;
-		let ok = result.run_success || false;
-		if (passed !== total) ok = false;
-		if (result.status_msg !== 'Accepted') ok = false;
-		if (errors.length > 0) ok = false;
+		const ok =
+			(result.run_success ?? false) &&
+			passed === total &&
+			result.status_msg === 'Accepted' &&
+			errors.length === 0;
 
 		return {
 			ok,
@@ -138,56 +149,57 @@ export class LeetCodeCLI extends LeetCode {
 		};
 	}
 
+	private formatTestOutput(result: JudgeCheckResponse) {
+		let output = result.code_output || [];
+		if (Array.isArray(output)) {
+			output = output.join('\n');
+		}
+		return {
+			stdout: output as string,
+			answer: result.code_answer || '',
+			expectedAnswer: result.expected_code_answer || '',
+		};
+	}
+
+	private formatSubmitOutput(result: JudgeCheckResponse) {
+		return {
+			stdout: result.std_output || '',
+			answer: (result.code_output as string) || '',
+			expectedAnswer: result.expected_output || '',
+		};
+	}
+
 	/**
 	 * Test code against sample or custom test cases.
-	 * @param options - Test options including slug, lang, questionId, typedCode, and dataInput
-	 * @returns Array of JudgeResult (one for actual, optionally one for expected on CN)
 	 */
 	public async testCode(options: TestCodeOptions): Promise<JudgeResult[]> {
 		await this.initialized;
 
 		const { slug, lang, questionId, typedCode, dataInput } = options;
-		const url = `${BASE_URL}/problems/${slug}/interpret_solution/`;
+		const interpretResult = await this.restRequest<InterpretResponse>({
+			url: `${BASE_URL}/problems/${slug}/interpret_solution/`,
+			method: 'POST',
+			headers: { referer: `${BASE_URL}/problems/${slug}/description/` },
+			body: {
+				lang,
+				question_id: questionId,
+				test_mode: false,
+				typed_code: typedCode,
+				data_input: dataInput,
+			},
+		});
 
-		await this.limiter.lock();
-		let interpretResult: InterpretResponse;
-		try {
-			const res = await fetch(url, {
-				method: 'POST',
-				headers: this.authHeaders({
-					referer: `${BASE_URL}/problems/${slug}/description/`,
-				}),
-				body: JSON.stringify({
-					lang,
-					question_id: questionId,
-					test_mode: false,
-					typed_code: typedCode,
-					data_input: dataInput,
-				}),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-			}
-			this.handleCsrf(res);
-			interpretResult = (await res.json()) as InterpretResponse;
-
-			if (!interpretResult.interpret_id) {
-				throw new Error('No interpret_id returned. Code may have been submitted too soon.');
-			}
-		} finally {
-			this.limiter.unlock();
+		if (!interpretResult.interpret_id) {
+			throw new Error('No interpret_id returned. Code may have been submitted too soon.');
 		}
 
-		// Poll for results
-		const ids: { type: string; id: string }[] = [
-			{ type: 'Actual', id: interpretResult.interpret_id },
-		];
+		const ids = [interpretResult.interpret_id];
 		if (interpretResult.interpret_expected_id) {
-			ids.push({ type: 'Expected', id: interpretResult.interpret_expected_id });
+			ids.push(interpretResult.interpret_expected_id);
 		}
 
 		const results: JudgeResult[] = [];
-		for (const { id } of ids) {
+		for (const id of ids) {
 			const raw = await this.pollJudgeResult(id);
 			results.push(this.formatResult(raw, true));
 		}
@@ -196,42 +208,26 @@ export class LeetCodeCLI extends LeetCode {
 
 	/**
 	 * Submit code for full judging.
-	 * @param options - Submit options including slug, lang, questionId, and typedCode
-	 * @returns JudgeResult with the submission verdict
 	 */
 	public async submitCode(options: SubmitCodeOptions): Promise<JudgeResult> {
 		await this.initialized;
 
 		const { slug, lang, questionId, typedCode } = options;
-		const url = `${BASE_URL}/problems/${slug}/submit/`;
+		const submitResult = await this.restRequest<SubmitResponse>({
+			url: `${BASE_URL}/problems/${slug}/submit/`,
+			method: 'POST',
+			headers: { referer: `${BASE_URL}/problems/${slug}/description/` },
+			body: {
+				lang,
+				question_id: questionId,
+				test_mode: false,
+				typed_code: typedCode,
+				judge_type: 'large',
+			},
+		});
 
-		await this.limiter.lock();
-		let submitResult: SubmitResponse;
-		try {
-			const res = await fetch(url, {
-				method: 'POST',
-				headers: this.authHeaders({
-					referer: `${BASE_URL}/problems/${slug}/description/`,
-				}),
-				body: JSON.stringify({
-					lang,
-					question_id: questionId,
-					test_mode: false,
-					typed_code: typedCode,
-					judge_type: 'large',
-				}),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-			}
-			this.handleCsrf(res);
-			submitResult = (await res.json()) as SubmitResponse;
-
-			if (!submitResult.submission_id) {
-				throw new Error('No submission_id returned.');
-			}
-		} finally {
-			this.limiter.unlock();
+		if (!submitResult.submission_id) {
+			throw new Error('No submission_id returned.');
 		}
 
 		const raw = await this.pollJudgeResult(submitResult.submission_id);
@@ -240,68 +236,33 @@ export class LeetCodeCLI extends LeetCode {
 
 	/**
 	 * Get user's favorite lists.
-	 * @returns FavoritesResponse with private and public favorites
 	 */
 	public async getFavorites(): Promise<FavoritesResponse> {
 		await this.initialized;
-
-		await this.limiter.lock();
-		try {
-			const res = await fetch(`${BASE_URL}/list/api/questions`, {
-				method: 'GET',
-				headers: this.authHeaders(),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-			}
-			this.handleCsrf(res);
-			return (await res.json()) as FavoritesResponse;
-		} finally {
-			this.limiter.unlock();
-		}
+		return this.restRequest<FavoritesResponse>({
+			url: `${BASE_URL}/list/api/questions`,
+		});
 	}
 
 	/**
 	 * Star (favorite) a problem.
-	 * @param questionId - The problem's question ID
-	 * @param favoriteIdHash - The favorite list hash (from getFavorites)
 	 */
 	public async star(questionId: string, favoriteIdHash: string): Promise<void> {
 		await this.initialized;
 		await this.graphql({
-			operationName: 'addQuestionToFavorite',
+			query: ADD_QUESTION_TO_FAVORITE,
 			variables: { favoriteIdHash, questionId },
-			query: `mutation addQuestionToFavorite($favoriteIdHash: String!, $questionId: String!) {
-  addQuestionToFavorite(favoriteIdHash: $favoriteIdHash, questionId: $questionId) {
-    ok
-    error
-    favoriteIdHash
-    questionId
-    __typename
-  }
-}`,
 		});
 	}
 
 	/**
 	 * Unstar (unfavorite) a problem.
-	 * @param questionId - The problem's question ID
-	 * @param favoriteIdHash - The favorite list hash (from getFavorites)
 	 */
 	public async unstar(questionId: string, favoriteIdHash: string): Promise<void> {
 		await this.initialized;
 		await this.graphql({
-			operationName: 'removeQuestionFromFavorite',
+			query: REMOVE_QUESTION_FROM_FAVORITE,
 			variables: { favoriteIdHash, questionId },
-			query: `mutation removeQuestionFromFavorite($favoriteIdHash: String!, $questionId: String!) {
-  removeQuestionFromFavorite(favoriteIdHash: $favoriteIdHash, questionId: $questionId) {
-    ok
-    error
-    favoriteIdHash
-    questionId
-    __typename
-  }
-}`,
 		});
 	}
 
@@ -313,23 +274,12 @@ export class LeetCodeCLI extends LeetCode {
 		data: Record<string, unknown>,
 	): Promise<LeetCodeSession[]> {
 		await this.initialized;
-
-		await this.limiter.lock();
-		try {
-			const res = await fetch(`${BASE_URL}/session/`, {
-				method,
-				headers: this.authHeaders(),
-				body: JSON.stringify(data),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-			}
-			this.handleCsrf(res);
-			const body = (await res.json()) as { sessions: LeetCodeSession[] };
-			return body.sessions;
-		} finally {
-			this.limiter.unlock();
-		}
+		const body = await this.restRequest<{ sessions: LeetCodeSession[] }>({
+			url: `${BASE_URL}/session/`,
+			method,
+			body: data,
+		});
+		return body.sessions;
 	}
 
 	/**
@@ -341,7 +291,6 @@ export class LeetCodeCLI extends LeetCode {
 
 	/**
 	 * Create a new coding session.
-	 * @param name - Session name
 	 */
 	public async createSession(name: string): Promise<LeetCodeSession[]> {
 		return this.sessionRequest('PUT', { func: 'create', name });
@@ -349,7 +298,6 @@ export class LeetCodeCLI extends LeetCode {
 
 	/**
 	 * Activate a coding session.
-	 * @param sessionId - Session ID to activate
 	 */
 	public async activateSession(sessionId: number): Promise<LeetCodeSession[]> {
 		return this.sessionRequest('PUT', { func: 'activate', target: sessionId });
@@ -357,7 +305,6 @@ export class LeetCodeCLI extends LeetCode {
 
 	/**
 	 * Delete a coding session.
-	 * @param sessionId - Session ID to delete
 	 */
 	public async deleteSession(sessionId: number): Promise<LeetCodeSession[]> {
 		return this.sessionRequest('DELETE', { target: sessionId });
@@ -372,80 +319,59 @@ export class LeetCodeCLI extends LeetCode {
 	/**
 	 * Get problems for a category via the REST API.
 	 * Categories: 'algorithms', 'database', 'shell', 'concurrency'
-	 * @param category - The category slug
-	 * @returns Array of CategoryProblem
 	 */
 	public async categoryProblems(category: string): Promise<CategoryProblem[]> {
 		await this.initialized;
 
-		await this.limiter.lock();
-		try {
-			const res = await fetch(`${BASE_URL}/api/problems/${category}/`, {
-				method: 'GET',
-				headers: this.authHeaders(),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-			}
-			this.handleCsrf(res);
-			const json = (await res.json()) as CategoryProblemsResponse;
+		const json = await this.restRequest<CategoryProblemsResponse>({
+			url: `${BASE_URL}/api/problems/${category}/`,
+		});
 
-			return json.stat_status_pairs
-				.filter((p) => !p.stat.question__hide)
-				.map((p) => ({
-					id: p.stat.question_id,
-					fid: p.stat.frontend_question_id,
-					name: p.stat.question__title,
-					slug: p.stat.question__title_slug,
-					link: `${BASE_URL}/problems/${p.stat.question__title_slug}/description/`,
-					locked: p.paid_only,
-					percent: (p.stat.total_acs * 100) / p.stat.total_submitted,
-					level: LeetCodeCLI.DIFFICULTY_MAP[p.difficulty.level] || 'Unknown',
-					state: p.status || 'None',
-					starred: p.is_favor,
-					category: json.category_slug,
-				}));
-		} finally {
-			this.limiter.unlock();
-		}
+		return json.stat_status_pairs
+			.filter((p) => !p.stat.question__hide)
+			.map((p) => ({
+				id: p.stat.question_id,
+				fid: p.stat.frontend_question_id,
+				name: p.stat.question__title,
+				slug: p.stat.question__title_slug,
+				link: `${BASE_URL}/problems/${p.stat.question__title_slug}/description/`,
+				locked: p.paid_only,
+				percent: (p.stat.total_acs * 100) / p.stat.total_submitted,
+				level: LeetCodeCLI.DIFFICULTY_MAP[p.difficulty.level] || 'Unknown',
+				state: p.status || 'None',
+				starred: p.is_favor,
+				category,
+			}));
+	}
+
+	/**
+	 * Get problems from all categories.
+	 */
+	public async allCategoryProblems(): Promise<CategoryProblem[]> {
+		const results = await Promise.all(PROBLEM_CATEGORIES.map((cat) => this.categoryProblems(cat)));
+		return results.flat();
 	}
 
 	/**
 	 * Get submissions for a specific problem by its slug.
 	 * Returns the first 20 submissions.
-	 * @param slug - Problem title slug
 	 */
 	public async problemSubmissions(slug: string): Promise<ProblemSubmission[]> {
 		await this.initialized;
 
-		await this.limiter.lock();
-		try {
-			const res = await fetch(`${BASE_URL}/api/submissions/${slug}`, {
-				method: 'GET',
-				headers: this.authHeaders({
-					referer: `${BASE_URL}/problems/${slug}/`,
-				}),
-			});
-			if (!res.ok) {
-				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
-			}
-			this.handleCsrf(res);
-			const json = (await res.json()) as { submissions_dump: ProblemSubmission[] };
-			return json.submissions_dump.map((s) => ({
-				...s,
-				id: s.url.split('/').filter(Boolean).pop() || s.id,
-			}));
-		} finally {
-			this.limiter.unlock();
-		}
+		const json = await this.restRequest<{ submissions_dump: ProblemSubmission[] }>({
+			url: `${BASE_URL}/api/submissions/${slug}`,
+			headers: { referer: `${BASE_URL}/problems/${slug}/` },
+		});
+
+		return json.submissions_dump.map((s) => ({
+			...s,
+			id: s.url.split('/').filter(Boolean).pop() || s.id,
+		}));
 	}
 
 	/**
 	 * Get the top voted solution from discussions for a problem.
-	 * @param slug - Problem title slug
-	 * @param questionId - Problem question ID (numeric string)
-	 * @param lang - Programming language tag to filter by (optional)
-	 * @returns TopVotedSolution or null if no solution found
 	 */
 	public async getTopVotedSolution(
 		slug: string,
@@ -480,7 +406,7 @@ export class LeetCodeCLI extends LeetCode {
 			content: (node.post.content || '').replace(/\\n/g, '\n').replace(/\\t/g, '\t'),
 			author: node.post.author.username,
 			votes: node.post.voteCount,
-			link: `https://leetcode.com/problems/${slug}/discuss/${node.id}`,
+			link: `${BASE_URL}/problems/${slug}/discuss/${node.id}`,
 		};
 	}
 }

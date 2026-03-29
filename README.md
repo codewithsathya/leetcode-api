@@ -79,10 +79,10 @@ import { LeetCode } from '@leetnotion/leetcode-api';
 
 const leetcode = new LeetCode();
 const problems = await leetcode.problems({
-    category: 'algorithms',
-    offset: 0,
-    limit: 50,
-    filters: { difficulty: 'MEDIUM' },
+	category: 'algorithms',
+	offset: 0,
+	limit: 50,
+	filters: { difficulty: 'MEDIUM' },
 });
 ```
 
@@ -129,24 +129,24 @@ import stealth from 'puppeteer-extra-plugin-stealth';
 
 const _browser = chromium.use(stealth()).launch();
 const _page = _browser
-    .then((browser) => browser.newPage())
-    .then(async (page) => {
-        await page.goto('https://leetcode.com');
-        return page;
-    });
+	.then((browser) => browser.newPage())
+	.then(async (page) => {
+		await page.goto('https://leetcode.com');
+		return page;
+	});
 
 fetcher.set(async (...args) => {
-    const page = await _page;
-    const res = await page.evaluate(async (args) => {
-        const res = await fetch(...args);
-        return {
-            body: await res.text(),
-            status: res.status,
-            statusText: res.statusText,
-            headers: Object.fromEntries(res.headers),
-        };
-    }, args);
-    return new Response(res.body, res);
+	const page = await _page;
+	const res = await page.evaluate(async (args) => {
+		const res = await fetch(...args);
+		return {
+			body: await res.text(),
+			status: res.status,
+			statusText: res.statusText,
+			headers: Object.fromEntries(res.headers),
+		};
+	}, args);
+	return new Response(res.body, res);
 });
 
 const lc = new LeetCode();

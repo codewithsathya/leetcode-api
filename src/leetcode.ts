@@ -295,7 +295,7 @@ export class LeetCode extends BaseLeetCode {
 		await this.initialized;
 		const { data } = await this.graphql({
 			query: DAILY,
-			cacheTime: 3_600_000, // 1 hour
+			cacheTime: 0,
 		});
 
 		return data.activeDailyCodingChallengeQuestion as DailyChallenge;

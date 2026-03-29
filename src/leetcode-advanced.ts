@@ -10,6 +10,7 @@ import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?r
 import LISTS from './graphql/lists.graphql?raw';
 import MINIMAL_COMPANY_TAGS from './graphql/minimal-company-tags.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
+import QUESTION_DETAIL from './graphql/question-detail.graphql?raw';
 import QUESTIONS_OF_LIST from './graphql/questions-of-list.graphql?raw';
 import TOPIC_TAGS from './graphql/topic-tags.graphql?raw';
 import { LeetCode } from './leetcode';
@@ -23,6 +24,7 @@ import {
 	MinimalCompanyTagDetail,
 	ProblemFieldDetails,
 	QueryParams,
+	QuestionDetail,
 	Submission,
 	TopicTagDetails,
 	UserSubmission,
@@ -425,6 +427,16 @@ export class LeetCodeAdvanced extends LeetCode {
 			}
 		}
 		return mapping;
+	}
+
+	public async getQuestionDetailsByTitleSlug(titleSlug: string): Promise<QuestionDetail> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: QUESTION_DETAIL,
+			variables: { titleSlug },
+			cacheTime: 600_000, // 10 minutes
+		});
+		return data as QuestionDetail;
 	}
 
 	private async fetchCategoryQuestions(category: string): Promise<CategoryStatPair[]> {
