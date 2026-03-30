@@ -3,7 +3,8 @@ import { BASE_URL, PROBLEM_CATEGORIES, USER_AGENT } from './constants';
 import fetch from './fetch';
 import ADD_QUESTION_TO_FAVORITE from './graphql/add-question-to-favorite.graphql?raw';
 import REMOVE_QUESTION_FROM_FAVORITE from './graphql/remove-question-from-favorite.graphql?raw';
-import TOP_VOTED_SOLUTION from './graphql/top-voted-solution.graphql?raw';
+import SOLUTION_BY_ID from './graphql/solution-by-id.graphql?raw';
+import TOP_VOTED_SOLUTION_ID from './graphql/top-voted-solution-id.graphql?raw';
 import { LeetCode } from './leetcode';
 import type {
 	CategoryProblem,
@@ -14,10 +15,11 @@ import type {
 	JudgeResult,
 	LeetCodeSession,
 	ProblemSubmission,
+	SolutionArticle,
 	SubmitCodeOptions,
 	SubmitResponse,
 	TestCodeOptions,
-	TopVotedSolution,
+	TopVotedSolutionIdResult,
 } from './leetcode-cli-types';
 import { parse_cookie } from './utils';
 
@@ -371,42 +373,68 @@ export class LeetCodeCLI extends LeetCode {
 	}
 
 	/**
-	 * Get the top voted solution from discussions for a problem.
+	 * Get the topic ID of the top voted solution article for a problem.
+	 */
+	public async getTopVotedSolutionId(
+		slug: string,
+		lang: string[] = [],
+	): Promise<TopVotedSolutionIdResult> {
+		await this.initialized;
+
+		const res = await this.graphql({
+			query: TOP_VOTED_SOLUTION_ID,
+			variables: {
+				questionSlug: slug,
+				skip: 0,
+				first: 1,
+				orderBy: 'MOST_VOTES',
+				userInput: '',
+				tagSlugs: lang,
+			},
+			cacheTime: 60 * 60 * 1000, // Cache for 1 hour
+		});
+
+		const data = res?.data?.ugcArticleSolutionArticles;
+		const totalNum = data?.totalNum ?? 0;
+		if (totalNum === 0 || !data?.edges?.length) {
+			return { totalNum: 0 };
+		}
+
+		return {
+			totalNum,
+			topicId: data.edges[0].node.topic.id,
+		};
+	}
+
+	/**
+	 * Get a solution article by its topic ID.
+	 */
+	public async getSolutionById(topicId: number): Promise<SolutionArticle> {
+		await this.initialized;
+
+		const res = await this.graphql({
+			query: SOLUTION_BY_ID,
+			variables: { topicId: String(topicId) },
+			cacheTime: 60 * 60 * 1000, // Cache for 1 hour
+		});
+
+		return res?.data?.ugcArticleSolutionArticle;
+	}
+
+	/**
+	 * Get the top voted solution for a problem.
 	 */
 	public async getTopVotedSolution(
 		slug: string,
-		questionId: string,
-		lang?: string,
-	): Promise<TopVotedSolution | null> {
+		lang: string[] = [],
+	): Promise<SolutionArticle | null> {
 		await this.initialized;
 
-		const tags = lang ? [lang === 'python3' ? 'python' : lang] : [];
-
-		const res = await this.graphql({
-			query: TOP_VOTED_SOLUTION,
-			variables: {
-				questionId,
-				orderBy: 'most_votes',
-				skip: 0,
-				query: '',
-				first: 1,
-				tags,
-			},
-		});
-
-		const edges = res?.data?.questionTopicsList?.edges;
-		if (!edges || edges.length === 0) {
+		const result = await this.getTopVotedSolutionId(slug, lang);
+		if (result.totalNum === 0 || !('topicId' in result)) {
 			return null;
 		}
 
-		const node = edges[0].node;
-		return {
-			id: node.id,
-			title: node.title,
-			content: (node.post.content || '').replace(/\\n/g, '\n').replace(/\\t/g, '\t'),
-			author: node.post.author.username,
-			votes: node.post.voteCount,
-			link: `${BASE_URL}/problems/${slug}/discuss/${node.id}`,
-		};
+		return this.getSolutionById(result.topicId);
 	}
 }

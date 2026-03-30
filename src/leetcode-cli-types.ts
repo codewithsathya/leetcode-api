@@ -151,12 +151,58 @@ export interface ProblemSubmission {
 	memory: string;
 }
 
-/** Top voted solution from discussions */
-export interface TopVotedSolution {
-	id: string;
+/** Result from getTopVotedSolutionId */
+export type TopVotedSolutionIdResult = { totalNum: number; topicId: number } | { totalNum: 0 };
+
+/** Solution article returned by getSolutionById */
+export interface SolutionArticle {
+	uuid: string;
 	title: string;
+	slug: string;
+	summary: string;
+	author: {
+		realName: string;
+		userAvatar: string;
+		userSlug: string;
+		userName: string;
+		nameColor: string | null;
+		certificationLevel: string;
+		activeBadge: {
+			icon: string;
+			displayName: string;
+		} | null;
+	};
+	articleType: string;
+	thumbnail: string;
+	createdAt: string;
+	updatedAt: string;
+	status: string;
+	isLeetcode: boolean;
+	canSee: boolean;
+	canEdit: boolean;
+	isMyFavorite: boolean;
+	chargeType: string;
+	myReactionType: string | null;
+	topicId: number;
+	hitCount: number;
+	hasVideoArticle: boolean;
+	reactions: {
+		count: number;
+		reactionType: string;
+	}[];
+	tags: {
+		name: string;
+		slug: string;
+		tagType: string | null;
+	}[];
+	topic: {
+		id: number;
+		topLevelCommentCount: number;
+	};
 	content: string;
-	author: string;
-	votes: number;
-	link: string;
+	isSerialized: boolean;
+	isAuthorArticleReviewer: boolean | null;
+	scoreInfo: { scoreCoefficient: number } | null;
+	prev: { uuid: string; slug: string; topicId: string; title: string } | null;
+	next: { uuid: string; slug: string; topicId: string; title: string } | null;
 }
