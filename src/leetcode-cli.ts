@@ -118,7 +118,11 @@ export class LeetCodeCLI extends LeetCode {
 	/**
 	 * Format raw judge check response into a JudgeResult.
 	 */
-	private formatResult(result: JudgeCheckResponse, isTest: boolean): JudgeResult {
+	private formatResult(
+		result: JudgeCheckResponse,
+		isTest: boolean,
+		submissionId: string = '',
+	): JudgeResult {
 		const errors = this.collectErrors(result);
 
 		const { answer, expectedAnswer, stdout } = isTest
@@ -148,6 +152,7 @@ export class LeetCodeCLI extends LeetCode {
 			stdout,
 			answer,
 			expected_answer: expectedAnswer,
+			submission_id: submissionId || result.submission_id || '',
 		};
 	}
 
@@ -233,7 +238,7 @@ export class LeetCodeCLI extends LeetCode {
 		}
 
 		const raw = await this.pollJudgeResult(submitResult.submission_id);
-		return this.formatResult(raw, false);
+		return this.formatResult(raw, false, String(submitResult.submission_id));
 	}
 
 	/**

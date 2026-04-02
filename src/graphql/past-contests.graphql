@@ -1,0 +1,17 @@
+query contestV2HistoryContests($skip: Int!, $limit: Int!) {
+	contestV2HistoryContests(skip: $skip, limit: $limit) {
+		totalNum
+		contests {
+			titleSlug
+			title
+			titleCn
+			startTime
+			duration
+			cardImg
+			cardImgApp
+			companyWatermark
+			solved
+			totalQuestions
+		}
+	}
+}

@@ -16,6 +16,7 @@ export interface JudgeResult {
 	stdout: string;
 	answer: string | string[];
 	expected_answer: string | string[];
+	submission_id: string;
 }
 
 /** Raw response from /submissions/detail/$id/check/ */

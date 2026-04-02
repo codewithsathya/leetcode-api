@@ -64,5 +64,6 @@ query {
 			}
 			note
 		}
+		userStatus
 	}
 }

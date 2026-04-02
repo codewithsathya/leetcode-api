@@ -595,9 +595,40 @@ export interface DailyChallenge {
 	date: string;
 	link: string;
 	question: Problem;
+	userStatus?: string;
 }
 
 export interface List {
 	name: string;
 	slug: string;
+}
+
+export interface ContestQuestion {
+	credit: number;
+	title: string;
+	title_slug: string;
+	category_slug: string;
+	difficulty: number;
+}
+
+export interface ContestQuestions {
+	questions: ContestQuestion[];
+}
+
+export interface PastContest {
+	titleSlug: string;
+	title: string;
+	titleCn: string;
+	startTime: number;
+	duration: number;
+	cardImg: string;
+	cardImgApp: string;
+	companyWatermark: string | null;
+	solved: number;
+	totalQuestions: number;
+}
+
+export interface PastContests {
+	totalNum: number;
+	contests: PastContest[];
 }
