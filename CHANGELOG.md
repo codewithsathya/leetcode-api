@@ -2,6 +2,47 @@
 
 All notable changes to `@leetnotion/leetcode-api` are documented in this file.
 
+## [3.0.0] - 2026-04-03
+
+### Breaking Changes
+
+- Extracted `BaseLeetCode` and `BaseCredential` abstract base classes — `LeetCode` and `LeetCodeCN` now extend `BaseLeetCode` instead of `EventEmitter` directly
+- Renamed CN credential class from `Credential` to `CredentialCN` (exported from `credential-cn.ts`)
+- Renamed CN-specific types with `CN` prefix (`UserResult` → `CNUserResult`, `Profile` → `CNProfile`, etc.)
+- `LeetCodeCN.user()` now returns `CNUserResult` instead of `UserResult`
+- Constructor `cache` parameter now defaults to `new Cache()` instead of a shared singleton `default_cache`
+- Removed `src/problem-properties.ts` (superseded by new type definitions)
+
+### Added
+
+- **`LeetCodeCLI` class** (`src/leetcode-cli.ts`) — extends `LeetCode` with REST API methods for code execution:
+  - `testCode()` — run code against test cases
+  - `submitCode()` — submit code for judging
+  - `pollJudgeResult()` — poll submission/interpret results with rate limiting and timeout
+  - `categoryProblems()` — fetch problems by category via REST API
+  - `problemSubmissions()` — fetch submissions for a specific problem
+  - `getSessions()` / `changeSession()` / `createSession()` — session management
+  - `getFavorites()` / `star()` / `unstar()` — favorites management
+  - `getTopVotedSolution()` — fetch top voted solution for a problem
+- **`LeetCodeAdvanced` new methods:**
+  - `getQuestionDetailsByTitleSlug()` — detailed question info with 10-minute cache
+  - `getContestQuestions()` — fetch contest questions via REST API
+  - `getPastContests()` — paginated past contest history
+- New GraphQL queries: `past-contests`, `question-detail`, `add-question-to-favorite`, `remove-question-from-favorite`, `solution-by-id`, `top-voted-solution-id`
+- New type definitions in `leetcode-cli-types.ts` (JudgeResult, TestCodeOptions, SubmitCodeOptions, etc.)
+- New type definitions in `leetcode-types.ts` (QuestionDetail, LanguageListItem, ContestQuestions, PastContests, etc.)
+- Exported `BaseCredential`, `BaseLeetCode`, `CredentialCN`, `LeetCodeCLI`, and CLI types from package index
+- New tests for `LeetCodeCLI`, `LeetCodeCN`, `RateLimiter`, and extended tests for `LeetCode`
+
+### Changed
+
+- Unified `graphql()` method in `BaseLeetCode` — eliminates duplicate GraphQL handling across `LeetCode` and `LeetCodeCN`
+- Added default cache times to frequently called methods (profiles: 5min, problems: 10min, recent submissions: 30s)
+- Rate limiter `lock()`/`unlock()` now uses `try/finally` pattern consistently instead of `try/catch`
+- `submissions()` now correctly slices results to requested `limit`
+- `submission()` detail parsing uses `JSON.parse` instead of `new Function()` for safer evaluation
+- `daily.graphql` query now includes `userStatus` field
+
 ## [2.0.0] - 2026-03-28
 
 ### Breaking Changes
