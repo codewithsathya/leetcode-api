@@ -31,6 +31,25 @@ describe('LeetCode', { timeout: 15_000 }, () => {
 			expect(user.matchedUser?.username.toLowerCase()).toBe('codewithsathya');
 		});
 
+		it('should return cached response on second graphql call', async () => {
+			const query = {
+				operationName: 'getQuestionsCount',
+				variables: {},
+				query: `
+                query getQuestionsCount {
+                    allQuestionsCount {
+                        difficulty
+                        count
+                    }
+                }
+                `,
+				cacheTime: 60_000,
+			};
+			const first = await lc.graphql(query);
+			const second = await lc.graphql(query);
+			expect(second).toEqual(first);
+		});
+
 		it("should be able to get user's recent submissions", async () => {
 			const recent_submissions = await lc.recent_user_submissions('codewithsathya', 5);
 			expect(recent_submissions.length).toBe(5);

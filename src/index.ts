@@ -6,10 +6,15 @@ export * from './leetcode-types';
 export * from './types';
 export { LeetCode, LeetCodeCN };
 
+export * from './base-credential';
+export * from './base-leetcode';
 export * from './cache';
 export * from './constants';
 export * from './credential';
+export * from './credential-cn';
 export * from './fetch';
 export * from './leetcode';
 export * from './leetcode-advanced';
+export * from './leetcode-cli';
+export * from './leetcode-cli-types';
 export * from './mutex';

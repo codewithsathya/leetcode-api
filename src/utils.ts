@@ -1,7 +1,12 @@
 export function parse_cookie(cookie: string): Record<string, string> {
 	return cookie
 		.split(';')
-		.map((x) => x.trim().split('='))
+		.map((x) => {
+			const trimmed = x.trim();
+			const idx = trimmed.indexOf('=');
+			if (idx === -1) return [trimmed, ''];
+			return [trimmed.slice(0, idx), trimmed.slice(idx + 1)];
+		})
 		.reduce(
 			(acc, x) => {
 				acc[x[0]] = x[1];

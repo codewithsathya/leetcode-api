@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import fs from 'fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Cache } from '../cache';
 import { Credential } from '../credential';
@@ -36,7 +35,6 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 
 		it('should be able to get problem types', async () => {
 			const problemTypes = await lc.getProblemTypes();
-			fs.writeFileSync('problemTypes.json', JSON.stringify(problemTypes, null, 2));
 			expect(Object.keys(problemTypes).length).toBeGreaterThan(3000);
 		});
 
@@ -110,7 +108,6 @@ describe('LeetCode Advanced', { timeout: 60_000 * 60 }, () => {
 
 		it('should be able to get title slug question number mapping', async () => {
 			const mapping = await lc.getTitleSlugQuestionNumberMapping();
-			fs.writeFileSync('titleSlugQuestionNumberMapping.json', JSON.stringify(mapping, null, 2));
 			expect(Object.keys(mapping).length).toBeGreaterThan(3000);
 		});
 

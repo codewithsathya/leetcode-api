@@ -10,19 +10,25 @@ import IS_EASTER_EGG_COLLECTED from './graphql/is-easter-egg-collected.graphql?r
 import LISTS from './graphql/lists.graphql?raw';
 import MINIMAL_COMPANY_TAGS from './graphql/minimal-company-tags.graphql?raw';
 import NO_OF_QUESTIONS from './graphql/no-of-problems.graphql?raw';
+import PAST_CONTESTS from './graphql/past-contests.graphql?raw';
+import QUESTION_DETAIL from './graphql/question-detail.graphql?raw';
 import QUESTIONS_OF_LIST from './graphql/questions-of-list.graphql?raw';
 import TOPIC_TAGS from './graphql/topic-tags.graphql?raw';
 import { LeetCode } from './leetcode';
 import {
 	AllCompanyTags,
 	CompanyTagDetail,
+	ContestQuestion,
+	ContestQuestions,
 	DetailedProblem,
 	EasterEggStatus,
 	LeetcodeProblem,
 	List,
 	MinimalCompanyTagDetail,
+	PastContests,
 	ProblemFieldDetails,
 	QueryParams,
+	QuestionDetail,
 	Submission,
 	TopicTagDetails,
 	UserSubmission,
@@ -427,10 +433,82 @@ export class LeetCodeAdvanced extends LeetCode {
 		return mapping;
 	}
 
+	public async getQuestionDetailsByTitleSlug(titleSlug: string): Promise<QuestionDetail> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: QUESTION_DETAIL,
+			variables: { titleSlug },
+			cacheTime: 600_000, // 10 minutes
+		});
+		return data as QuestionDetail;
+	}
+
+	/**
+	 * Get questions of a contest by its slug.
+	 * @param contestSlug - The slug of the contest (e.g., "weekly-contest-495").
+	 * @returns ContestQuestions
+	 */
+	public async getContestQuestions(contestSlug: string): Promise<ContestQuestions> {
+		await this.initialized;
+		await this.limiter.lock();
+		try {
+			const res = await fetch(`${BASE_URL}/contest/api/info/${contestSlug}/`, {
+				method: 'GET',
+				headers: {
+					'content-type': 'application/json',
+					origin: BASE_URL,
+					referer: BASE_URL,
+					cookie: `csrftoken=${this.credential.csrf || ''}; LEETCODE_SESSION=${
+						this.credential.session || ''
+					};`,
+					'x-csrftoken': this.credential.csrf || '',
+					'user-agent': USER_AGENT,
+				},
+			});
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status} ${res.statusText}: ${await res.text()}`);
+			}
+			const data = (await res.json()) as {
+				questions: (ContestQuestion & { id: number; question_id: number })[];
+			};
+			const questions: ContestQuestion[] = data.questions.map(
+				({ credit, title, title_slug, category_slug, difficulty }) => ({
+					credit,
+					title,
+					title_slug,
+					category_slug,
+					difficulty,
+				}),
+			);
+			return { questions };
+		} finally {
+			this.limiter.unlock();
+		}
+	}
+
+	/**
+	 * Get past contests history.
+	 * @param option
+	 * @param option.limit - Number of contests to fetch. Default is 30.
+	 * @param option.skip - Number of contests to skip. Default is 0.
+	 * @returns PastContests
+	 */
+	public async getPastContests({
+		limit = 30,
+		skip = 0,
+	}: { limit?: number; skip?: number } = {}): Promise<PastContests> {
+		await this.initialized;
+		const { data } = await this.graphql({
+			query: PAST_CONTESTS,
+			variables: { limit, skip },
+		});
+		return data.contestV2HistoryContests as PastContests;
+	}
+
 	private async fetchCategoryQuestions(category: string): Promise<CategoryStatPair[]> {
 		await this.initialized;
+		await this.limiter.lock();
 		try {
-			await this.limiter.lock();
 			const res = await fetch(`${BASE_URL}/api/problems/${category}/`, {
 				method: 'GET',
 				headers: {
@@ -450,11 +528,9 @@ export class LeetCodeAdvanced extends LeetCode {
 			const rawText = await res.text();
 			const sanitized = rawText.replace(/[\n\r\t]/g, '');
 			const data = JSON.parse(sanitized) as CategoryQuestionsResponse;
-			this.limiter.unlock();
 			return data.stat_status_pairs;
-		} catch (err) {
+		} finally {
 			this.limiter.unlock();
-			throw err;
 		}
 	}
 

@@ -81,6 +81,111 @@ export interface DetailedProblem {
 	translatedTitle?: string | null;
 }
 
+export interface LanguageListItem {
+	id: number;
+	name: string;
+}
+
+export interface SubmittableLanguageListItem {
+	id: number;
+	name: string;
+	verboseName: string;
+}
+
+export interface StatusListItem {
+	id: number;
+	name: string;
+}
+
+export interface QuestionDiscussionTopic {
+	id: number;
+	commentCount: number;
+	topLevelCommentCount: number;
+}
+
+export interface UgcArticleOfficialSolutionArticle {
+	uuid: string;
+	chargeType: string;
+	canSee: boolean;
+	hasVideoArticle: boolean;
+}
+
+export interface PositionLevelTag {
+	name: string;
+	nameTranslated: string | null;
+	slug: string;
+}
+
+export interface SimilarQuestionListItem {
+	difficulty: ProblemDifficulty;
+	titleSlug: string;
+	title: string;
+	translatedTitle: string | null;
+	isPaidOnly: boolean;
+}
+
+export interface NextChallenge {
+	difficulty: ProblemDifficulty;
+	title: string;
+	titleSlug: string;
+	questionFrontendId: string;
+}
+
+export interface FeaturedContest {
+	titleSlug: string;
+	title: string;
+}
+
+export interface QuestionDetailQuestion {
+	title: string;
+	titleSlug: string;
+	questionId: string;
+	questionFrontendId: string;
+	questionTitle: string;
+	translatedTitle: string | null;
+	content: string;
+	translatedContent: string | null;
+	categoryTitle: string;
+	difficulty: ProblemDifficulty;
+	stats: string;
+	companyTagStatsV2: unknown;
+	topicTags: TopicTag[];
+	positionLevelTags: PositionLevelTag[];
+	similarQuestionList: SimilarQuestionListItem[];
+	mysqlSchemas: string[];
+	dataSchemas: string[];
+	frontendPreviews: string;
+	likes: number;
+	dislikes: number;
+	isPaidOnly: boolean;
+	status: string | null;
+	canSeeQuestion: boolean;
+	enableTestMode: boolean;
+	metaData: string;
+	enableRunCode: boolean;
+	enableSubmit: boolean;
+	enableDebugger: boolean;
+	envInfo: string;
+	isLiked: boolean | null;
+	nextChallenges: NextChallenge[];
+	libraryUrl: string | null;
+	adminUrl: string | null;
+	hints: string[];
+	codeSnippets: CodeSnippet[];
+	exampleTestcaseList: string[];
+	hasFrontendPreview: boolean;
+	featuredContests: FeaturedContest[];
+}
+
+export interface QuestionDetail {
+	languageList: LanguageListItem[];
+	submittableLanguageList: SubmittableLanguageListItem[];
+	statusList: StatusListItem[];
+	questionDiscussionTopic: QuestionDiscussionTopic;
+	ugcArticleOfficialSolutionArticle: UgcArticleOfficialSolutionArticle | null;
+	question: QuestionDetailQuestion;
+}
+
 export interface NextChallengePair {
 	question_title: string;
 	question_title_slug: string;
@@ -420,7 +525,7 @@ export interface Submission {
 
 export interface SubmissionsDump {
 	submissions_dump: Submission[];
-	has_next: string;
+	has_next: boolean;
 	last_key: string;
 }
 
@@ -490,9 +595,40 @@ export interface DailyChallenge {
 	date: string;
 	link: string;
 	question: Problem;
+	userStatus?: string;
 }
 
 export interface List {
 	name: string;
 	slug: string;
+}
+
+export interface ContestQuestion {
+	credit: number;
+	title: string;
+	title_slug: string;
+	category_slug: string;
+	difficulty: number;
+}
+
+export interface ContestQuestions {
+	questions: ContestQuestion[];
+}
+
+export interface PastContest {
+	titleSlug: string;
+	title: string;
+	titleCn: string;
+	startTime: number;
+	duration: number;
+	cardImg: string;
+	cardImgApp: string;
+	companyWatermark: string | null;
+	solved: number;
+	totalQuestions: number;
+}
+
+export interface PastContests {
+	totalNum: number;
+	contests: PastContest[];
 }
