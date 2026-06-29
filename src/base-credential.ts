@@ -13,8 +13,8 @@ export abstract class BaseCredential implements ICredential {
 
 	constructor(data?: ICredential) {
 		if (data) {
-			this.session = data.session;
-			this.csrf = data.csrf;
+			this.session = clean(data.session);
+			this.csrf = clean(data.csrf);
 		}
 	}
 
@@ -29,8 +29,15 @@ export abstract class BaseCredential implements ICredential {
 	 * @returns
 	 */
 	public async init(session?: string): Promise<this> {
-		this.csrf = await this.fetchCsrf();
-		if (session) this.session = session;
+		this.csrf = clean(await this.fetchCsrf());
+		if (session) this.session = clean(session);
 		return this;
 	}
+}
+
+// ponytail: cookie tokens are printable ASCII; strip any char illegal in an HTTP header
+// value (whitespace, control chars, stray unicode like a copy-pasted "…") so a bad
+// .env value fails auth gracefully instead of crashing node-fetch with a TypeError.
+function clean(value?: string): string | undefined {
+	return value?.replace(/[^\t\x20-\x7e\x80-\xff]/g, '');
 }
