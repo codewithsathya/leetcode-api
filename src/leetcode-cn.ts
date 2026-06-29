@@ -9,7 +9,7 @@ export class LeetCodeCN extends BaseLeetCode {
 	/**
 	 * The credential this LeetCodeCN instance is using.
 	 */
-	public declare credential: Credential;
+	declare public credential: Credential;
 
 	/**
 	 * If a credential is provided, the LeetCodeCN API will be authenticated. Otherwise, it will be anonymous.
